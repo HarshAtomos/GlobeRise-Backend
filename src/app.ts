@@ -1,0 +1,69 @@
+import express, { Application } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import passport from './config/passport';
+import authRoutes from './routes/auth.routes';
+import { errorHandler, notFoundHandler } from './middleware/error.middleware';
+import { config } from './config/env';
+
+const app: Application = express();
+
+// ==================== Security Middleware ====================
+
+// Helmet for security headers
+app.use(helmet());
+
+// CORS configuration
+app.use(
+    cors({
+        origin: config.frontendUrl,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+    })
+);
+
+// Rate limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+app.use('/api/', limiter);
+
+// ==================== Body Parsing ====================
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ==================== Passport Initialization ====================
+
+app.use(passport.initialize());
+
+// ==================== Routes ====================
+
+// Health check
+app.get('/health', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Server is running',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Auth routes
+app.use('/api/auth', authRoutes);
+
+// ==================== Error Handling ====================
+
+// 404 handler
+app.use(notFoundHandler);
+
+// Global error handler
+app.use(errorHandler);
+
+export default app;
