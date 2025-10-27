@@ -41,7 +41,8 @@ passport.use(
         async (email, password, done) => {
             try {
                 const result = await authService.loginWithEmail(email, password);
-                return done(null, result.user);
+                // Pass the full result as the user object (we'll handle it in the controller)
+                return done(null, result as any);
             } catch (error) {
                 return done(null, false, { message: (error as Error).message });
             }
@@ -72,7 +73,8 @@ if (config.oauth.google.clientId && config.oauth.google.clientSecret) {
                         'google'
                     );
 
-                    return done(null, result.user);
+                    // Pass the full result as the user object (we'll handle it in the controller)
+                    return done(null, result as any);
                 } catch (error) {
                     return done(error as Error, false);
                 }

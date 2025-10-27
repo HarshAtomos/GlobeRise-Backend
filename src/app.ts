@@ -47,7 +47,7 @@ app.use(passport.initialize());
 // ==================== Routes ====================
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
     res.json({
         success: true,
         message: 'Server is running',
