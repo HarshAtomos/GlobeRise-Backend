@@ -1,9 +1,11 @@
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
+import { Request } from 'express';
 import prisma from '../config/database';
 import { config } from '../config/env';
 import emailService from './email.service';
+import tokenService from './token.service';
 import { AuthResponse, JWTPayload, UserResponse } from '../types';
 
 class AuthService {
@@ -43,12 +45,19 @@ class AuthService {
       id: user.id,
       email: user.email,
       is_verified: user.is_verified,
+      role: user.role,
+      two_factor_enabled: user.two_factor_enabled,
       created_at: user.created_at,
     };
   }
 
+  // Get user by ID
+  async getUserById(userId: string) {
+    return await prisma.user.findUnique({ where: { id: userId } });
+  }
+
   // Register with email/password
-  async registerWithEmail(email: string, password: string): Promise<AuthResponse> {
+  async registerWithEmail(email: string, password: string, req?: Request): Promise<AuthResponse> {
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -59,30 +68,40 @@ class AuthService {
     const passwordHash = await this.hashPassword(password);
     const verificationToken = this.generateVerificationToken();
 
-    // Create user
+    // Set verification token expiry (24 hours from now)
+    const verificationExpiry = new Date();
+    verificationExpiry.setHours(verificationExpiry.getHours() + 24);
+
+    // Create user with profile
     const user = await prisma.user.create({
       data: {
         email,
         password_hash: passwordHash,
         verification_token: verificationToken,
+        verification_token_expires: verificationExpiry,
         is_verified: false,
+        profile: {
+          create: {}, // Create empty profile
+        },
       },
     });
 
     // Send verification email
     await emailService.sendVerificationEmail(email, verificationToken);
 
-    // Generate JWT
+    // Generate JWT and refresh token
     const token = this.generateToken(user.id, user.email);
+    const refreshToken = await tokenService.generateRefreshToken(user.id, user.email, req);
 
     return {
       user: this.formatUserResponse(user),
       token,
+      refreshToken,
     };
   }
 
   // Login with email/password
-  async loginWithEmail(email: string, password: string): Promise<AuthResponse> {
+  async loginWithEmail(email: string, password: string, req?: Request): Promise<AuthResponse> {
     // Find user
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !user.password_hash) {
@@ -95,23 +114,41 @@ class AuthService {
       throw new Error('Invalid credentials');
     }
 
-    // Generate JWT
+    // If 2FA is enabled, return a temporary token for 2FA verification
+    if (user.two_factor_enabled) {
+      const tempToken = this.generateToken(user.id, user.email);
+      return {
+        user: this.formatUserResponse(user),
+        token: '', // No token yet
+        requiresTwoFactor: true,
+        tempToken, // Temporary token for 2FA verification
+      };
+    }
+
+    // Generate JWT and refresh token
     const token = this.generateToken(user.id, user.email);
+    const refreshToken = await tokenService.generateRefreshToken(user.id, user.email, req);
 
     return {
       user: this.formatUserResponse(user),
       token,
+      refreshToken,
     };
   }
 
   // Verify email
-  async verifyEmail(token: string): Promise<AuthResponse> {
+  async verifyEmail(token: string, req?: Request): Promise<AuthResponse> {
     const user = await prisma.user.findUnique({
       where: { verification_token: token },
     });
 
-    if (!user) {
+    if (!user || !user.verification_token_expires) {
       throw new Error('Invalid or expired verification token');
+    }
+
+    // Check if token is expired (24 hours)
+    if (user.verification_token_expires < new Date()) {
+      throw new Error('Verification token has expired. Please request a new verification email.');
     }
 
     // Update user
@@ -120,23 +157,62 @@ class AuthService {
       data: {
         is_verified: true,
         verification_token: null,
+        verification_token_expires: null,
       },
     });
 
-    // Generate JWT for auto-login
+    // Generate JWT and refresh token for auto-login
     const jwtToken = this.generateToken(updatedUser.id, updatedUser.email);
+    const refreshToken = await tokenService.generateRefreshToken(updatedUser.id, updatedUser.email, req);
 
     return {
       user: this.formatUserResponse(updatedUser),
       token: jwtToken,
+      refreshToken,
     };
+  }
+
+  // Resend verification email
+  async resendVerificationEmail(email: string): Promise<void> {
+    // Find user by email
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      // Don't reveal if user exists or not for security
+      return;
+    }
+
+    // Check if already verified
+    if (user.is_verified) {
+      throw new Error('Email is already verified');
+    }
+
+    // Generate new verification token
+    const verificationToken = this.generateVerificationToken();
+
+    // Set new expiry (24 hours from now)
+    const verificationExpiry = new Date();
+    verificationExpiry.setHours(verificationExpiry.getHours() + 24);
+
+    // Update user with new token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        verification_token: verificationToken,
+        verification_token_expires: verificationExpiry,
+      },
+    });
+
+    // Send verification email
+    await emailService.sendVerificationEmail(email, verificationToken);
   }
 
   // Find or create OAuth user (Google only)
   async findOrCreateOAuthUser(
     email: string,
     oauthId: string,
-    provider: 'google'
+    provider: 'google',
+    req?: Request
   ): Promise<AuthResponse> {
     // Try to find user by Google OAuth ID
     let user = await prisma.user.findUnique({
@@ -146,9 +222,11 @@ class AuthService {
     if (user) {
       // User found with OAuth ID
       const token = this.generateToken(user.id, user.email);
+      const refreshToken = await tokenService.generateRefreshToken(user.id, user.email, req);
       return {
         user: this.formatUserResponse(user),
         token,
+        refreshToken,
       };
     }
 
@@ -166,25 +244,32 @@ class AuthService {
       });
 
       const token = this.generateToken(user.id, user.email);
+      const refreshToken = await tokenService.generateRefreshToken(user.id, user.email, req);
       return {
         user: this.formatUserResponse(user),
         token,
+        refreshToken,
       };
     }
 
-    // Create new user with Google account
+    // Create new user with Google account and profile
     user = await prisma.user.create({
       data: {
         email,
         google_id: oauthId,
         is_verified: true, // Google emails are pre-verified
+        profile: {
+          create: {}, // Create empty profile
+        },
       },
     });
 
     const token = this.generateToken(user.id, user.email);
+    const refreshToken = await tokenService.generateRefreshToken(user.id, user.email, req);
     return {
       user: this.formatUserResponse(user),
       token,
+      refreshToken,
     };
   }
 }

@@ -4,6 +4,10 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import passport from './config/passport';
 import authRoutes from './routes/auth.routes';
+import profileRoutes from './routes/profile.routes';
+import adminRoutes from './routes/admin.routes';
+import sessionRoutes from './routes/session.routes';
+import twoFactorRoutes from './routes/two-factor.routes';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { config } from './config/env';
 
@@ -57,6 +61,18 @@ app.get('/api/health', (req, res) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+
+// Profile routes
+app.use('/api/profile', profileRoutes);
+
+// Admin routes
+app.use('/api/admin', adminRoutes);
+
+// Session routes
+app.use('/api/sessions', sessionRoutes);
+
+// Two-Factor Authentication routes
+app.use('/api/2fa', twoFactorRoutes);
 
 // ==================== Error Handling ====================
 

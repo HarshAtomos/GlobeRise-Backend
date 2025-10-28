@@ -1,9 +1,3 @@
-
-
-// ============================================
-// FILE: src/config/env.ts
-// ============================================
-
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -16,6 +10,8 @@ export const config = {
     jwt: {
         secret: process.env.JWT_SECRET!,
         expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+        refreshSecret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET!,
+        refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
     },
 
     database: {
@@ -36,6 +32,14 @@ export const config = {
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
             callbackUrl: process.env.GOOGLE_CALLBACK_URL!,
         },
+    },
+
+    passwordReset: {
+        expiresIn: process.env.PASSWORD_RESET_EXPIRES_IN || '1h',
+    },
+
+    twoFactor: {
+        appName: process.env.TWO_FACTOR_APP_NAME || 'GlobeRise',
     },
 };
 

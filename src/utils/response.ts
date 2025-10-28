@@ -24,6 +24,10 @@ export class ResponseHandler {
         return this.error(res, 'Validation failed', 422, errors);
     }
 
+    static badRequest(res: Response, message: string = 'Bad request') {
+        return this.error(res, message, 400);
+    }
+
     static unauthorized(res: Response, message: string = 'Unauthorized') {
         return this.error(res, message, 401);
     }

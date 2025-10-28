@@ -37,10 +37,11 @@ passport.use(
         {
             usernameField: 'email',
             passwordField: 'password',
+            passReqToCallback: true,
         },
-        async (email, password, done) => {
+        async (req, email, password, done) => {
             try {
-                const result = await authService.loginWithEmail(email, password);
+                const result = await authService.loginWithEmail(email, password, req);
                 // Pass the full result as the user object (we'll handle it in the controller)
                 return done(null, result as any);
             } catch (error) {

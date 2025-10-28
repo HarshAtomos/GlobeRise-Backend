@@ -7,17 +7,114 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
+}
+
 model User {
-  id                String    @id @default(cuid())
-  email             String    @unique
-  password_hash     String?
-  google_id         String?   @unique
-  is_verified       Boolean   @default(false)
-  verification_token String?  @unique
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
+  id                          String         @id @default(cuid())
+  email                       String         @unique
+  password_hash               String?
+  google_id                   String?        @unique
+  is_verified                 Boolean        @default(false)
+  verification_token          String?        @unique
+  verification_token_expires  DateTime?
+  role                        UserRole       @default(USER)
+  two_factor_enabled          Boolean        @default(false)
+  password_reset_token        String?        @unique
+  password_reset_expires      DateTime?
+  created_at                  DateTime       @default(now())
+  updated_at                  DateTime       @updatedAt
+
+  // Relations
+  profile                UserProfile?
+  refreshTokens          RefreshToken[]
+  passwordResets         PasswordReset[]
+  sessions               UserSession[]
+  twoFactorAuth          TwoFactorAuth?
 
   @@index([email])
   @@index([google_id])
   @@index([verification_token])
+  @@index([password_reset_token])
+}
+
+model UserProfile {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName  String?
+  lastName   String?
+  phone      String?
+  avatarUrl  String?
+  address    String?
+  city       String?
+  state      String?
+  zipCode    String?
+  country    String?
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model RefreshToken {
+  id           String        @id @default(cuid())
+  token        String        @unique
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  createdAt    DateTime      @default(now())
+  lastUsedAt   DateTime      @default(now())
+  isRevoked    Boolean       @default(false)
+  
+  // Relations
+  sessions     UserSession[]
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  used      Boolean  @default(false)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model UserSession {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenId  String
+  refreshToken    RefreshToken  @relation(fields: [refreshTokenId], references: [id], onDelete: Cascade)
+  ipAddress       String?
+  userAgent       String?
+  lastActivityAt  DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+
+  @@index([userId])
+  @@index([refreshTokenId])
+  @@index([lastActivityAt])
+}
+
+model TwoFactorAuth {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  secret      String
+  backupCodes String[] // Array of hashed backup codes
+  isEnabled   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
 }

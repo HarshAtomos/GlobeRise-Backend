@@ -8,6 +8,12 @@ import {
   verifyEmailValidator,
   handleValidationErrors,
 } from '../validators/auth.validator';
+import {
+  loginRateLimit,
+  registerRateLimit,
+  passwordResetRateLimit,
+  emailVerificationRateLimit,
+} from '../middleware/rate-limit.middleware';
 
 const router = Router();
 
@@ -16,6 +22,7 @@ const router = Router();
 // Register
 router.post(
   '/register',
+  registerRateLimit,
   registerValidator,
   handleValidationErrors,
   authController.register
@@ -24,6 +31,7 @@ router.post(
 // Login
 router.post(
   '/login',
+  loginRateLimit,
   loginValidator,
   handleValidationErrors,
   authController.login
@@ -32,9 +40,31 @@ router.post(
 // Verify email
 router.post(
   '/verify-email',
+  emailVerificationRateLimit,
   verifyEmailValidator,
   handleValidationErrors,
   authController.verifyEmail
+);
+
+// Resend verification email
+router.post(
+  '/resend-verification',
+  emailVerificationRateLimit,
+  authController.resendVerificationEmail
+);
+
+// Forgot password
+router.post(
+  '/forgot-password',
+  passwordResetRateLimit,
+  authController.forgotPassword
+);
+
+// Reset password
+router.post(
+  '/reset-password',
+  passwordResetRateLimit,
+  authController.resetPassword
 );
 
 // ==================== Google OAuth ====================
@@ -63,10 +93,23 @@ router.get(
   authController.getCurrentUser
 );
 
-// Refresh token (placeholder for future implementation)
+// Refresh token
 router.post(
   '/refresh',
   authController.refreshToken
+);
+
+// Logout (revoke current refresh token)
+router.post(
+  '/logout',
+  authController.logout
+);
+
+// Logout from all devices (requires authentication)
+router.post(
+  '/logout-all',
+  authenticateJWT,
+  authController.logoutAll
 );
 
 export default router;

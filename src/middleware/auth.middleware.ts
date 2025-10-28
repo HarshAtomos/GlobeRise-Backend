@@ -9,6 +9,8 @@ declare global {
             id: string;
             email: string;
             is_verified: boolean;
+            role: string;
+            two_factor_enabled: boolean;
             created_at: Date;
         }
     }
