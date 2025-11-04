@@ -10,9 +10,9 @@ class AuthController {
     // Register with email/password
     async register(req: Request, res: Response, next: NextFunction) {
         try {
-            const { email, password } = req.body;
+            const { email, password, referralCode } = req.body;
 
-            const result = await authService.registerWithEmail(email, password, req);
+            const result = await authService.registerWithEmail(email, password, referralCode, req);
 
             return ResponseHandler.success(
                 res,

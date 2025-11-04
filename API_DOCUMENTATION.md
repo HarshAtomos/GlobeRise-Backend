@@ -26,7 +26,8 @@ Create a new user account.
 ```json
 {
   "email": "user@example.com",
-  "password": "SecurePassword123"
+  "password": "SecurePassword123",
+  "referralCode": "ABCDEFGH" // optional 8-char uppercase code
 }
 ```
 
@@ -845,3 +846,40 @@ TWO_FACTOR_APP_NAME=GlobeRise
 - ✅ Session tracking and management
 - ✅ Secure backup codes for 2FA
 - ✅ Token rotation for enhanced security
+
+---
+
+## Referrals
+
+### Get My Referral Tree
+
+**GET** `/api/referrals/tree`
+
+Returns your own referral code and up to 16 direct referrals, each with their downline counts.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Referral tree fetched",
+  "data": {
+    "myCode": "ABCDEFGH",
+    "referrals": [
+      {
+        "id": "childId",
+        "email": "child@example.com",
+        "directCount": 3,
+        "teamCount": 9,
+        "teamVolume": 1234.56
+      }
+    ]
+  }
+}
+```

@@ -10,6 +10,23 @@ import { AuthResponse, JWTPayload, UserResponse } from '../types';
 
 class AuthService {
   private readonly SALT_ROUNDS = 10;
+  private readonly REFERRAL_LENGTH = 8;
+
+  // Generate a unique referral code (uppercase alphanumeric)
+  private async generateUniqueReferralCode(): Promise<string> {
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const randomCode = () =>
+      Array.from({ length: this.REFERRAL_LENGTH }, () =>
+        charset[Math.floor(Math.random() * charset.length)]
+      ).join('');
+
+    // Ensure uniqueness in DB
+    let code = randomCode();
+    while (await prisma.user.findUnique({ where: { referralCode: code } })) {
+      code = randomCode();
+    }
+    return code;
+  }
 
   // Generate JWT Token
   generateToken(userId: string, email: string): string {
@@ -57,7 +74,12 @@ class AuthService {
   }
 
   // Register with email/password
-  async registerWithEmail(email: string, password: string, req?: Request): Promise<AuthResponse> {
+  async registerWithEmail(
+    email: string,
+    password: string,
+    referralCode?: string,
+    req?: Request
+  ): Promise<AuthResponse> {
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -72,7 +94,23 @@ class AuthService {
     const verificationExpiry = new Date();
     verificationExpiry.setHours(verificationExpiry.getHours() + 24);
 
-    // Create user with profile
+    // Handle referral and enforce 16 limit
+    let referredById: string | undefined;
+    if (referralCode) {
+      const parentUser = await prisma.user.findUnique({ where: { referralCode } });
+      if (parentUser) {
+        const directCount = await prisma.user.count({ where: { referredById: parentUser.id } });
+        if (directCount < 16) {
+          referredById = parentUser.id;
+        }
+        // else ignore referralCode silently (could also throw)
+      }
+    }
+
+    // Generate user's own referral code
+    const newReferralCode = await this.generateUniqueReferralCode();
+
+    // Create user with profile and referral linkage
     const user = await prisma.user.create({
       data: {
         email,
@@ -80,8 +118,10 @@ class AuthService {
         verification_token: verificationToken,
         verification_token_expires: verificationExpiry,
         is_verified: false,
+        referralCode: newReferralCode,
+        referredById,
         profile: {
-          create: {}, // Create empty profile
+          create: {},
         },
       },
     });

@@ -35,10 +35,18 @@ model User {
   sessions               UserSession[]
   twoFactorAuth          TwoFactorAuth?
 
+  // Referral program
+  referralCode                String?        @unique
+  referredById                String?
+  referrer                    User?          @relation("Referrals", fields: [referredById], references: [id])
+  referrals                   User[]         @relation("Referrals")
+
   @@index([email])
   @@index([google_id])
   @@index([verification_token])
   @@index([password_reset_token])
+  @@index([referralCode])
+  @@index([referredById])
 }
 
 model UserProfile {

@@ -36,6 +36,12 @@ export const registerValidator = [
         .normalizeEmail()
         .withMessage('Please provide a valid email address'),
     passwordValidator,
+    body('referralCode')
+        .optional()
+        .isLength({ min: 8, max: 8 })
+        .withMessage('Referral code must be exactly 8 characters')
+        .matches(/^[A-Z0-9]{8}$/)
+        .withMessage('Referral code must be uppercase alphanumeric'),
 ];
 
 export const loginValidator = [

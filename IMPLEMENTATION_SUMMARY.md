@@ -378,4 +378,15 @@ All planned features have been successfully implemented:
 - ✅ **Email verification token expiration (24 hours)**
 - ✅ **Resend verification email endpoint**
 
+### 🔄 Referral System (NEW)
+
+- **Database:** added `referralCode`, `referredById`, self-relation (max 16 children enforced at registration).
+- **Validator:** `referralCode` optional, 8-char uppercase alphanumeric.
+- **Auth:** registration accepts `referralCode` and links if parent has <16 directs.
+- **Mock Blockchain:** `src/services/blockchain.mock.service.ts` provides fake `getStakedBalance`.
+- **Referral Tree:**
+  - **Service:** `src/services/referral.service.ts` – returns first-level referrals with counts & mock volume.
+  - **Controller/Route:** `GET /api/referrals/tree` (JWT).
+- **Docs:** API doc updated with `referralCode` field and new endpoint.
+
 The backend is now production-ready with enterprise-grade authentication and authorization!

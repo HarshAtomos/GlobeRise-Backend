@@ -8,6 +8,7 @@ import profileRoutes from './routes/profile.routes';
 import adminRoutes from './routes/admin.routes';
 import sessionRoutes from './routes/session.routes';
 import twoFactorRoutes from './routes/two-factor.routes';
+import referralsRoutes from './routes/referral.routes';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { config } from './config/env';
 
@@ -73,6 +74,9 @@ app.use('/api/sessions', sessionRoutes);
 
 // Two-Factor Authentication routes
 app.use('/api/2fa', twoFactorRoutes);
+
+// Referral routes
+app.use('/api/referrals', referralsRoutes);
 
 // ==================== Error Handling ====================
 
