@@ -8,12 +8,13 @@ import {
   verifyEmailValidator,
   handleValidationErrors,
 } from '../validators/auth.validator';
-import {
-  loginRateLimit,
-  registerRateLimit,
-  passwordResetRateLimit,
-  emailVerificationRateLimit,
-} from '../middleware/rate-limit.middleware';
+// Rate limiters (DISABLED FOR DEVELOPMENT)
+// import {
+//   loginRateLimit,
+//   registerRateLimit,
+//   passwordResetRateLimit,
+//   emailVerificationRateLimit,
+// } from '../middleware/rate-limit.middleware';
 
 const router = Router();
 
@@ -22,7 +23,7 @@ const router = Router();
 // Register
 router.post(
   '/register',
-  registerRateLimit,
+  // registerRateLimit, // DISABLED FOR DEVELOPMENT
   registerValidator,
   handleValidationErrors,
   authController.register
@@ -31,7 +32,7 @@ router.post(
 // Login
 router.post(
   '/login',
-  loginRateLimit,
+  // loginRateLimit, // DISABLED FOR DEVELOPMENT
   loginValidator,
   handleValidationErrors,
   authController.login
@@ -40,7 +41,7 @@ router.post(
 // Verify email
 router.post(
   '/verify-email',
-  emailVerificationRateLimit,
+  // emailVerificationRateLimit, // DISABLED FOR DEVELOPMENT
   verifyEmailValidator,
   handleValidationErrors,
   authController.verifyEmail
@@ -49,21 +50,21 @@ router.post(
 // Resend verification email
 router.post(
   '/resend-verification',
-  emailVerificationRateLimit,
+  // emailVerificationRateLimit, // DISABLED FOR DEVELOPMENT
   authController.resendVerificationEmail
 );
 
 // Forgot password
 router.post(
   '/forgot-password',
-  passwordResetRateLimit,
+  // passwordResetRateLimit, // DISABLED FOR DEVELOPMENT
   authController.forgotPassword
 );
 
 // Reset password
 router.post(
   '/reset-password',
-  passwordResetRateLimit,
+  // passwordResetRateLimit, // DISABLED FOR DEVELOPMENT
   authController.resetPassword
 );
 
