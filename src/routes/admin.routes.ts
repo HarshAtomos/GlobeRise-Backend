@@ -2,14 +2,14 @@ import { Router } from 'express';
 import adminController from '../controllers/admin.controller';
 import { authenticateJWT } from '../middleware/auth.middleware';
 import { requireAdmin } from '../middleware/rbac.middleware';
-import { adminRateLimit } from '../middleware/rate-limit.middleware';
+// import { adminRateLimit } from '../middleware/rate-limit.middleware'; // DISABLED FOR DEVELOPMENT
 
 const router = Router();
 
 // All admin routes require authentication, admin role, and rate limiting
 router.use(authenticateJWT);
 router.use(requireAdmin());
-router.use(adminRateLimit);
+// router.use(adminRateLimit); // DISABLED FOR DEVELOPMENT
 
 // Get all users with pagination
 router.get('/users', adminController.getAllUsers);
