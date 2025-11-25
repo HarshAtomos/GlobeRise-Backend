@@ -1,392 +1,79 @@
-# Implementation Summary - Auth System Enhancements
+# Implementation Summary - GlobeRise Backend
 
 ## ✅ Completed Features
 
-### 1. Refresh Token System
+### 1. Authentication & Security
+- **Core Auth:** Login, Register, Email Verification, Password Reset.
+- **Security:** JWT Access/Refresh tokens, 2FA (TOTP), RBAC (User/Admin), Rate Limiting (configurable).
+- **Referral System:** 
+  - Unique referral codes.
+  - Parent-child linkage.
+  - Max 16 direct referrals enforcement.
+  - **Enhanced Tree:** Returns Upline info + Downline Rank/Volume stats.
 
-- **Service:** `src/services/token.service.ts`
-- **Features:**
-  - Generate and store refresh tokens in database
-  - Token rotation on refresh (old token revoked, new one issued)
-  - Automatic token expiration (30 days default)
-  - Clean expired tokens capability
+### 2. Financial Core (4-Wallet Architecture)
+- **Database Schema:** `UserWallets`, `WalletTransaction`, `Investment`.
+- **Wallet Service:** ACID transactions for transfers/credits/debits.
+- **Investment Service:** Package/Fixed creation with Progressive & Downline validations.
 
-### 2. Logout Functionality
+### 3. Dynamic Configuration
+- **Admin Config:** Ranks, Level Rates, and Fees are database-driven, not hardcoded.
+- **Endpoints:** CRUD APIs for Ranks and Plan Settings.
 
-- **Endpoints:**
-  - `POST /api/auth/logout` - Logout current device
-  - `POST /api/auth/logout-all` - Logout all devices
-- **Behavior:** Revokes refresh tokens, access tokens expire naturally
+### 4. Income Engines
+- **Direct Referral Bonus:** 5% instant commission.
+- **ROI Engine:** Daily 8-12% calculation + Level Income trigger.
+- **Level Income:** 16 Levels (configurable), enforces "N directs for Level N" rule.
+- **Rank Engine:** Daily 60:40 Rule check for promotions + One-time Bonus.
+- **Royalty Engine:** Monthly "Growth Rule" check + Pool Distribution.
 
-### 3. Password Reset Flow
+### 5. User Dashboard
+- **Stats API:** Live aggregation of Team Business, Earnings, Rank, Wallet Balances.
+- **Chart API:** Daily earnings history (Last 7 days).
+- **History API:** Full list of user investments with ROI tracking.
 
-- **Service:** `src/services/password-reset.service.ts`
-- **Endpoints:**
-  - `POST /api/auth/forgot-password` - Request reset email
-  - `POST /api/auth/reset-password` - Reset with token
-- **Features:**
-  - Secure token generation
-  - Email delivery
-  - Token expiration (1 hour default)
-  - Automatic token cleanup
-  - All sessions revoked after password reset
-
-### 4. User Profiles
-
-- **Service:** `src/services/profile.service.ts`
-- **Controller:** `src/controllers/profile.controller.ts`
-- **Routes:** `src/routes/profile.routes.ts`
-- **Endpoints:**
-  - `GET /api/profile/me` - Get own profile
-  - `PUT /api/profile/me` - Update own profile
-  - `GET /api/profile/:userId` - Get public profile
-- **Fields:** firstName, lastName, phone, avatarUrl, address, city, state, zipCode, country
-
-### 5. Role-Based Access Control (RBAC)
-
-- **Middleware:** `src/middleware/rbac.middleware.ts`
-- **Roles:** USER, ADMIN, MODERATOR
-- **Functions:**
-  - `requireRole(...roles)` - Check for specific roles
-  - `requireAdmin()` - Admin-only access
-  - `requireModeratorOrAdmin()` - Moderator or Admin access
-  - `requireOwnerOrAdmin()` - Resource owner or Admin access
-
-### 6. Admin Panel
-
-- **Controller:** `src/controllers/admin.controller.ts`
-- **Routes:** `src/routes/admin.routes.ts`
-- **Endpoints:**
-  - `GET /api/admin/users` - List all users (paginated)
-  - `GET /api/admin/users/:userId` - Get user details
-  - `PUT /api/admin/users/:userId/role` - Assign role
-  - `DELETE /api/admin/users/:userId` - Delete user
-  - `GET /api/admin/stats` - System statistics
-
-### 7. Rate Limiting
-
-- **Middleware:** `src/middleware/rate-limit.middleware.ts`
-- **Limiters:**
-  - Login: 5 attempts / 15 min
-  - Registration: 3 / hour
-  - Password Reset: 3 / hour
-  - Email Verification: 3 / hour
-  - 2FA Operations: 10 / 15 min
-  - General API: 100 / 15 min
-  - Admin Operations: 50 / 15 min
-
-### 8. Session Management
-
-- **Service:** `src/services/session.service.ts`
-- **Controller:** `src/controllers/session.controller.ts`
-- **Routes:** `src/routes/session.routes.ts`
-- **Endpoints:**
-  - `GET /api/sessions` - List active sessions
-  - `DELETE /api/sessions/:sessionId` - Revoke session
-- **Features:**
-  - Track IP address and user agent
-  - Parse device information
-  - Automatic cleanup of inactive sessions
-
-### 9. Two-Factor Authentication (2FA)
-
-- **Service:** `src/services/two-factor.service.ts`
-- **Controller:** `src/controllers/two-factor.controller.ts`
-- **Routes:** `src/routes/two-factor.routes.ts`
-- **Endpoints:**
-  - `POST /api/2fa/setup` - Generate secret & QR code
-  - `POST /api/2fa/enable` - Enable 2FA
-  - `POST /api/2fa/disable` - Disable 2FA
-  - `POST /api/2fa/verify-login` - Verify 2FA during login
-  - `POST /api/2fa/backup-codes/regenerate` - New backup codes
-- **Features:**
-  - TOTP-based (Google/Microsoft Authenticator compatible)
-  - QR code generation
-  - 10 backup codes per user
-  - Backup code consumption tracking
-  - Time window tolerance for clock drift
+### 6. Withdrawals
+- **Logic:** Monday-only window + Admin Approval Flow.
 
 ---
 
-## 📊 Database Schema Changes
+## 📊 Database Schema Overview
 
-### New Models
+### User
+- Profile, Referral Linkage, Rank (String).
+- Relations: Wallets, Investments, Transactions, RankHistory.
 
-1. **RefreshToken** - Store refresh tokens with expiry
-2. **PasswordReset** - Track password reset requests
-3. **UserProfile** - User profile information
-4. **UserSession** - Track active sessions
-5. **TwoFactorAuth** - Store 2FA secrets and backup codes
+### Configuration Tables
+- `PlanConfig`: Global settings (Level Rates JSON, Fees).
+- `RankConfig`: Dynamic rank rules (Target, Bonus, Royalty %).
 
-### Updated User Model
-
-- Added `role` (enum: USER, ADMIN, MODERATOR)
-- Added `two_factor_enabled` (boolean)
-- Added `password_reset_token` (string)
-- Added `password_reset_expires` (datetime)
-- Added relations to new models
+### Financials
+- `UserWallets`: 5 Balances.
+- `WalletTransaction`: Audit Ledger.
+- `BusinessSnapshot`: Monthly stats for Royalty logic.
 
 ---
 
-## 🔧 New Dependencies
+## 🚀 How to Test (Demo Flow)
 
-```json
-{
-  "dependencies": {
-    "speakeasy": "^2.0.0", // TOTP generation
-    "qrcode": "^1.5.3" // QR code generation
-  },
-  "devDependencies": {
-    "@types/speakeasy": "^2.0.10",
-    "@types/qrcode": "^1.5.5"
-  }
-}
-```
+### 1. Admin Setup
+- Login as Admin.
+- Use `POST /api/config/ranks` to tweak ranks if needed.
+- Fund demo user: `POST /api/wallets/admin/credit`.
 
----
+### 2. User Dashboard
+- Login as User.
+- `GET /api/dashboard/stats` -> See 0 earnings.
+- `POST /api/investments/package` -> Buy Package.
+- `GET /api/dashboard/stats` -> See updated wallet balance.
 
-## 📁 File Structure
+### 3. Tree & Earnings
+- Register downline users.
+- `GET /api/referrals/tree` -> See team structure.
+- **Trigger ROI (Admin):** `POST /api/admin/roi/trigger`.
+- `GET /api/dashboard/chart` -> See earnings graph populate.
 
-```
-src/
-├── services/
-│   ├── auth.service.ts (updated)
-│   ├── token.service.ts (new)
-│   ├── password-reset.service.ts (new)
-│   ├── profile.service.ts (new)
-│   ├── session.service.ts (new)
-│   └── two-factor.service.ts (new)
-├── controllers/
-│   ├── auth.controller.ts (updated)
-│   ├── profile.controller.ts (new)
-│   ├── admin.controller.ts (new)
-│   ├── session.controller.ts (new)
-│   └── two-factor.controller.ts (new)
-├── routes/
-│   ├── auth.routes.ts (updated)
-│   ├── profile.routes.ts (new)
-│   ├── admin.routes.ts (new)
-│   ├── session.routes.ts (new)
-│   └── two-factor.routes.ts (new)
-├── middleware/
-│   ├── auth.middleware.ts (updated)
-│   ├── rbac.middleware.ts (new)
-│   └── rate-limit.middleware.ts (new)
-├── types/
-│   └── index.ts (updated)
-├── config/
-│   └── env.ts (updated)
-└── app.ts (updated)
-```
-
----
-
-## 🔐 Environment Variables to Add
-
-Add these to your `.env` file:
-
-```env
-# JWT Refresh Token Configuration (optional, defaults to JWT_SECRET if not set)
-JWT_REFRESH_SECRET=your-different-refresh-secret-key
-JWT_REFRESH_EXPIRES_IN=30d
-
-# Password Reset Configuration (optional, defaults to 1h)
-PASSWORD_RESET_EXPIRES_IN=1h
-
-# Two-Factor Authentication Configuration (optional)
-TWO_FACTOR_APP_NAME=GlobeRise
-```
-
----
-
-## 🚀 How to Test
-
-### 1. Start the Server
-
-```bash
-npm run dev
-```
-
-### 2. Test Basic Auth Flow
-
-```bash
-# Register
-curl -X POST http://localhost:6969/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"Test123456"}'
-
-# Login
-curl -X POST http://localhost:6969/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"Test123456"}'
-
-# Get current user
-curl -X GET http://localhost:6969/api/auth/me \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
-### 3. Test Refresh Token
-
-```bash
-curl -X POST http://localhost:6969/api/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{"refreshToken":"YOUR_REFRESH_TOKEN"}'
-```
-
-### 4. Test Password Reset
-
-```bash
-# Request reset
-curl -X POST http://localhost:6969/api/auth/forgot-password \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com"}'
-
-# Reset password (check email for token)
-curl -X POST http://localhost:6969/api/auth/reset-password \
-  -H "Content-Type: application/json" \
-  -d '{"token":"RESET_TOKEN","password":"NewPassword123"}'
-```
-
-### 5. Test Profile
-
-```bash
-# Update profile
-curl -X PUT http://localhost:6969/api/profile/me \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"firstName":"John","lastName":"Doe","address":"123 Main St","city":"New York","state":"NY","zipCode":"10001","country":"United States"}'
-```
-
-### 6. Test 2FA Setup
-
-```bash
-# Setup 2FA
-curl -X POST http://localhost:6969/api/2fa/setup \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-
-# Enable 2FA (use code from authenticator app)
-curl -X POST http://localhost:6969/api/2fa/enable \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"token":"123456"}'
-
-# Login with 2FA
-# First login to get tempToken
-curl -X POST http://localhost:6969/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"Test123456"}'
-
-# Then verify 2FA
-curl -X POST http://localhost:6969/api/2fa/verify-login \
-  -H "Content-Type: application/json" \
-  -d '{"tempToken":"TEMP_TOKEN","code":"123456"}'
-```
-
-### 7. Test Admin Features (requires ADMIN role)
-
-```bash
-# Get all users
-curl -X GET http://localhost:6969/api/admin/users?page=1&limit=20 \
-  -H "Authorization: Bearer YOUR_ADMIN_ACCESS_TOKEN"
-
-# Assign role
-curl -X PUT http://localhost:6969/api/admin/users/USER_ID/role \
-  -H "Authorization: Bearer YOUR_ADMIN_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"role":"MODERATOR"}'
-
-# Get stats
-curl -X GET http://localhost:6969/api/admin/stats \
-  -H "Authorization: Bearer YOUR_ADMIN_ACCESS_TOKEN"
-```
-
-### 8. Test Sessions
-
-```bash
-# Get active sessions
-curl -X GET http://localhost:6969/api/sessions \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-
-# Revoke a session
-curl -X DELETE http://localhost:6969/api/sessions/SESSION_ID \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
----
-
-## 📝 Postman Collection
-
-Use the script from earlier to auto-save tokens in Postman:
-
-```javascript
-// Add to Tests tab of register/login requests
-const response = pm.response.json();
-
-if (response.success && response.data && response.data.token) {
-  const token = response.data.token;
-  const refreshToken = response.data.refreshToken;
-
-  pm.globals.set("auth_token", token);
-  if (refreshToken) {
-    pm.globals.set("refresh_token", refreshToken);
-  }
-
-  console.log("✅ Tokens saved");
-}
-```
-
-Then use `{{auth_token}}` and `{{refresh_token}}` in your requests.
-
----
-
-## ⚠️ Important Notes
-
-1. **First Admin User:** After deployment, you'll need to manually set the first admin user in the database:
-
-   ```sql
-   UPDATE "User" SET role = 'ADMIN' WHERE email = 'your-admin@email.com';
-   ```
-
-2. **Gmail 2FA:** Remember to use App Passwords for Gmail SMTP (not your regular password)
-
-3. **Token Security:**
-
-   - Access tokens are short-lived (7 days default)
-   - Refresh tokens are long-lived (30 days default)
-   - Always use HTTPS in production
-   - Store refresh tokens securely on client
-
-4. **2FA Backup Codes:** Users should save backup codes immediately as they're only shown once
-
-5. **Rate Limiting:** Rate limits reset after the time window expires
-
----
-
-## 🎉 All Features Implemented + Bonus!
-
-All planned features have been successfully implemented:
-
-- ✅ Refresh tokens with rotation
-- ✅ Logout (single & all devices)
-- ✅ Password reset flow
-- ✅ User profiles
-- ✅ Role-based access control
-- ✅ Admin panel
-- ✅ Rate limiting
-- ✅ Session management
-- ✅ Two-Factor Authentication (TOTP)
-- ✅ **Email verification token expiration (24 hours)**
-- ✅ **Resend verification email endpoint**
-
-### 🔄 Referral System (NEW)
-
-- **Database:** added `referralCode`, `referredById`, self-relation (max 16 children enforced at registration).
-- **Validator:** `referralCode` optional, 8-char uppercase alphanumeric.
-- **Auth:** registration accepts `referralCode` and links if parent has <16 directs.
-- **Mock Blockchain:** `src/services/blockchain.mock.service.ts` provides fake `getStakedBalance`.
-- **Referral Tree:**
-  - **Service:** `src/services/referral.service.ts` – returns first-level referrals with counts & mock volume.
-  - **Controller/Route:** `GET /api/referrals/tree` (JWT).
-- **Docs:** API doc updated with `referralCode` field and new endpoint.
-
-The backend is now production-ready with enterprise-grade authentication and authorization!
+### 4. Rank & Royalty
+- **Trigger Rank (Admin):** `POST /api/admin/rank/trigger`.
+- Check User Rank on Dashboard.
+- **Trigger Royalty (Admin):** `POST /api/admin/royalty/trigger`.
