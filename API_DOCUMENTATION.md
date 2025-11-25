@@ -10,12 +10,14 @@
 6. [Wallets & Transfers](#wallets--transfers)
 7. [Investments](#investments)
 8. [Referrals](#referrals)
-9. [Withdrawals](#withdrawals)
-10. [System Configuration](#system-configuration)
-11. [Two-Factor Authentication (2FA)](#two-factor-authentication-2fa)
-12. [Session Management](#session-management)
-13. [Admin Panel](#admin-panel)
-14. [Rate Limiting](#rate-limiting)
+9. [Transactions](#transactions)
+10. [Withdrawals](#withdrawals)
+11. [System Configuration](#system-configuration)
+12. [Two-Factor Authentication (2FA)](#two-factor-authentication-2fa)
+13. [Session Management](#session-management)
+14. [Admin Panel](#admin-panel)
+15. [Admin Reports](#admin-reports)
+16. [Rate Limiting](#rate-limiting)
 
 ---
 
@@ -1191,6 +1193,253 @@ Authorization: Bearer <admin_access_token>
 
 ---
 
+## Transactions
+
+### Get Transaction History
+
+**GET** `/api/transactions/my`
+
+Get user's transaction history with filtering and pagination.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+
+- `type` (optional): Filter by type - `ROI`, `COMMISSION`, `ROYALTY`, `RANK_BONUS`, `REWARDS` (all reward types), `TRANSFER`, `INVESTMENT`, `WITHDRAWAL`, `DEPOSIT`, `ALL`
+- `wallet` (optional): Filter by wallet - `FIAT`, `DEPOSIT`, `STAKING`, `REWARD`, `WITHDRAWAL`, `ALL`
+- `page` (default: 1)
+- `limit` (default: 20)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "transactions": [
+      {
+        "id": "...",
+        "amount": "50.00",
+        "type": "ROI",
+        "status": "COMPLETED",
+        "sourceWallet": null,
+        "destWallet": "REWARD",
+        "description": "Daily ROI",
+        "createdAt": "2025-01-01T00:00:00.000Z",
+        "metadata": { "day": 15 }
+      }
+    ],
+    "pagination": {
+      "total": 150,
+      "page": 1,
+      "limit": 20,
+      "totalPages": 8
+    }
+  }
+}
+```
+
+---
+
+### Get Earnings Summary
+
+**GET** `/api/transactions/earnings`
+
+Get breakdown of earnings by type.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "breakdown": {
+      "ROI": { "total": "1500.00", "count": 30 },
+      "COMMISSION": { "total": "500.00", "count": 15 },
+      "ROYALTY": { "total": "200.00", "count": 2 },
+      "RANK_BONUS": { "total": "250.00", "count": 1 }
+    },
+    "totalEarnings": "2450.00"
+  }
+}
+```
+
+---
+
+## Admin Reports
+
+**Note:** All report endpoints require the `ADMIN` role.
+
+### Get Platform Summary
+
+**GET** `/api/admin/reports/summary`
+
+Get comprehensive platform statistics.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "users": {
+      "total": 1000,
+      "verified": 850,
+      "unverified": 150
+    },
+    "investments": {
+      "totalVolume": "5000000.00",
+      "totalCount": 2500,
+      "activeCount": 1800
+    },
+    "withdrawals": {
+      "totalVolume": "1500000.00",
+      "totalCount": 800,
+      "pendingCount": 25
+    },
+    "commissions": { "total": "350000.00" },
+    "royalties": { "total": "50000.00" },
+    "rankDistribution": [
+      { "rank": "NONE", "count": 500 },
+      { "rank": "EXPLORER", "count": 200 }
+    ]
+  }
+}
+```
+
+---
+
+### Get Investment Report
+
+**GET** `/api/admin/reports/investments`
+
+Get investment volume chart data.
+
+**Query Parameters:**
+
+- `period`: `daily`, `weekly`, `monthly` (default: `daily`)
+- `days`: Number of days to include (default: 30)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "period": "daily",
+    "days": 30,
+    "data": [
+      { "date": "2025-01-01", "volume": "50000.00" },
+      { "date": "2025-01-02", "volume": "75000.00" }
+    ],
+    "total": "1500000.00"
+  }
+}
+```
+
+---
+
+### Get User Growth Report
+
+**GET** `/api/admin/reports/users`
+
+Get new user signups over time.
+
+**Query Parameters:**
+
+- `days`: Number of days to include (default: 30)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "days": 30,
+    "data": [
+      { "date": "2025-01-01", "count": 15 },
+      { "date": "2025-01-02", "count": 22 }
+    ],
+    "totalNewUsers": 450
+  }
+}
+```
+
+---
+
+### Get Commission Report
+
+**GET** `/api/admin/reports/commissions`
+
+Get commission payouts breakdown.
+
+**Query Parameters:**
+
+- `days`: Number of days to include (default: 30)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "days": 30,
+    "breakdown": {
+      "COMMISSION": { "total": "50000.00", "count": 500 },
+      "ROI": { "total": "120000.00", "count": 3000 },
+      "ROYALTY": { "total": "10000.00", "count": 50 },
+      "RANK_BONUS": { "total": "5000.00", "count": 10 }
+    },
+    "dailyRoiTrend": [
+      { "date": "2025-01-01", "amount": "4000.00" }
+    ]
+  }
+}
+```
+
+---
+
+### Get Top Performers
+
+**GET** `/api/admin/reports/top-performers`
+
+Get top users by earnings, referrals, and investments.
+
+**Query Parameters:**
+
+- `limit`: Number of users per category (default: 10)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "topEarners": [
+      { "userId": "...", "email": "...", "name": "John Doe", "rank": "GRANDMASTER", "totalEarnings": "75000.00" }
+    ],
+    "topReferrers": [
+      { "userId": "...", "email": "...", "name": "Jane Smith", "rank": "NAVIGATOR", "referralCount": 50 }
+    ],
+    "topInvestors": [
+      { "userId": "...", "email": "...", "name": "Mike Chen", "rank": "LEGEND", "totalInvested": "100000.00" }
+    ]
+  }
+}
+```
+
+---
+
 ## Rate Limiting
 
 The API implements rate limiting on various endpoints:
@@ -1246,3 +1495,56 @@ TWO_FACTOR_APP_NAME=GlobeRise
 - ✅ Session tracking and management
 - ✅ Secure backup codes for 2FA
 - ✅ Token rotation for enhanced security
+- ✅ Dormant referrer check (90 days inactive)
+
+---
+
+## Blockchain Integration
+
+The backend integrates with the GlobeRise smart contracts on Ethereum/BSC.
+
+### Environment Variables
+
+Add these to enable blockchain integration:
+
+```env
+# Blockchain RPC
+RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY
+
+# Contract Addresses (from deployment)
+PLATFORM_ADDRESS=0x...
+TOKEN_ADDRESS=0x...
+```
+
+### On-Chain Data
+
+The `BlockchainService` can read:
+- User registration and rank
+- Investment history
+- Withdrawable balance
+- Staking packages
+- Platform statistics
+
+User transactions (invest, withdraw) are signed via frontend wallet (MetaMask/Trust Wallet).
+
+---
+
+## Demo Seed Script
+
+Run the demo seed to create test accounts:
+
+```bash
+npx ts-node src/scripts/seed-demo.ts
+```
+
+### Demo Credentials
+
+| Email | Password | Rank |
+|-------|----------|------|
+| admin@globerise.com | Admin@123 | Admin |
+| whale@globerise.com | Whale@123 | GRANDMASTER |
+| leader@globerise.com | Leader@123 | NAVIGATOR |
+| starter@globerise.com | Starter@123 | EXPLORER |
+| newbie@globerise.com | Newbie@123 | NONE |
+
+Additional test users: `team1-10@demo.globerise.com`, `member1-5@demo.globerise.com` (password: `Demo@123`)

@@ -94,16 +94,39 @@ class AuthService {
     const verificationExpiry = new Date();
     verificationExpiry.setHours(verificationExpiry.getHours() + 24);
 
-    // Handle referral and enforce 16 limit
+    // Handle referral: enforce 16 limit and dormant check
     let referredById: string | undefined;
     if (referralCode) {
       const parentUser = await prisma.user.findUnique({ where: { referralCode } });
       if (parentUser) {
-        const directCount = await prisma.user.count({ where: { referredById: parentUser.id } });
-        if (directCount < 16) {
-          referredById = parentUser.id;
+        // Check if referrer is dormant (90+ days inactive)
+        const DORMANT_PERIOD_DAYS = 90;
+        const dormantThreshold = new Date();
+        dormantThreshold.setDate(dormantThreshold.getDate() - DORMANT_PERIOD_DAYS);
+        
+        // A user is dormant if they haven't made any investment or transaction recently
+        const recentActivity = await prisma.walletTransaction.findFirst({
+          where: {
+            userId: parentUser.id,
+            createdAt: { gte: dormantThreshold }
+          }
+        });
+        
+        const isDormant = !recentActivity && parentUser.created_at < dormantThreshold;
+        
+        if (isDormant) {
+          throw new Error('Referral code belongs to an inactive user. Please use a different referral code.');
         }
-        // else ignore referralCode silently (could also throw)
+
+        // Check direct referral limit (max 16)
+        const directCount = await prisma.user.count({ where: { referredById: parentUser.id } });
+        if (directCount >= 16) {
+          throw new Error('This referral code has reached its maximum referral limit.');
+        }
+        
+        referredById = parentUser.id;
+      } else {
+        throw new Error('Invalid referral code.');
       }
     }
 

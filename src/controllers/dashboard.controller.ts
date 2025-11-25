@@ -76,8 +76,14 @@ class DashboardController {
       });
       const lastMonthBusiness = snapshot?.totalTeamBusiness || new Decimal(0);
 
+      // Get user rank
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { rank: true }
+      });
+
       return ResponseHandler.success(res, 'Dashboard stats retrieved', {
-        rank: req.user.rank,
+        rank: user?.rank || 'NONE',
         totalEarnings,
         teamBusiness: teamStats.total,
         directBusiness,

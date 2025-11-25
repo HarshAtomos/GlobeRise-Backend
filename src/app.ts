@@ -15,6 +15,8 @@ import investmentRoutes from './routes/investment.routes';
 import withdrawalRoutes from './routes/withdrawal.routes';
 import configRoutes from './routes/config.routes';
 import dashboardRoutes from './routes/dashboard.routes';
+import transactionRoutes from './routes/transaction.routes';
+import reportsRoutes from './routes/reports.routes';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { config } from './config/env';
 import roiService from './services/roi.service';
@@ -101,6 +103,12 @@ app.use('/api/config', configRoutes);
 
 // Dashboard routes
 app.use('/api/dashboard', dashboardRoutes);
+
+// Transaction routes
+app.use('/api/transactions', transactionRoutes);
+
+// Reports routes (Admin)
+app.use('/api/admin/reports', reportsRoutes);
 
 // ==================== Scheduled Jobs ====================
 
