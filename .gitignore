@@ -5,3 +5,14 @@ dist/
 *.log
 prisma/migrations/
 .vscode/
+
+# Hardhat artifacts (generated files - do not commit)
+artifacts/
+cache/
+typechain-types/
+
+# Deployment files (may contain sensitive data)
+deployments/*.json
+
+# Gas report
+gas-report.txt
