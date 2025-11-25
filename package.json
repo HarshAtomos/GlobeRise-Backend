@@ -1,7 +1,7 @@
 {
   "name": "globerise-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "GlobeRise Backend API Server",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon src/server.ts",
