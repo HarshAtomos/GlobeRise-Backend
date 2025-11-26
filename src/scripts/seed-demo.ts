@@ -46,7 +46,7 @@ interface DemoUser {
 const DEMO_USERS: DemoUser[] = [
   // Admin - separate from MLM
   {
-    email: 'admin@globerise.com',
+    email: 'admin@globerise.eu',
     password: 'Admin@123',
     role: UserRole.ADMIN,
     firstName: 'System',
@@ -58,7 +58,7 @@ const DEMO_USERS: DemoUser[] = [
   },
   // Whale - ROOT of MLM tree
   {
-    email: 'whale@globerise.com',
+    email: 'whale@globerise.eu',
     password: 'Whale@123',
     role: UserRole.USER,
     firstName: 'Michael',
@@ -70,96 +70,96 @@ const DEMO_USERS: DemoUser[] = [
   },
   // Leader - Whale's direct #1
   {
-    email: 'leader@globerise.com',
+    email: 'leader@globerise.eu',
     password: 'Leader@123',
     role: UserRole.USER,
     firstName: 'Sarah',
     lastName: 'Johnson',
-    sponsorEmail: 'whale@globerise.com',
+    sponsorEmail: 'whale@globerise.eu',
     investment: INVESTMENT_AMOUNT,
     roiRate: 10, // Has 2 directs within 14 days
     daysAgo: 40
   },
   // Team1 - Whale's direct #2
   {
-    email: 'team1@globerise.com',
+    email: 'team1@globerise.eu',
     password: DEFAULT_PASSWORD,
     role: UserRole.USER,
     firstName: 'Alex',
     lastName: 'Rivera',
-    sponsorEmail: 'whale@globerise.com',
+    sponsorEmail: 'whale@globerise.eu',
     investment: INVESTMENT_AMOUNT,
     roiRate: 8,
     daysAgo: 38
   },
   // Team2 - Whale's direct #3
   {
-    email: 'team2@globerise.com',
+    email: 'team2@globerise.eu',
     password: DEFAULT_PASSWORD,
     role: UserRole.USER,
     firstName: 'Jordan',
     lastName: 'Lee',
-    sponsorEmail: 'whale@globerise.com',
+    sponsorEmail: 'whale@globerise.eu',
     investment: INVESTMENT_AMOUNT,
     roiRate: 8,
     daysAgo: 35
   },
   // Team3 - Whale's direct #4
   {
-    email: 'team3@globerise.com',
+    email: 'team3@globerise.eu',
     password: DEFAULT_PASSWORD,
     role: UserRole.USER,
     firstName: 'Taylor',
     lastName: 'Martinez',
-    sponsorEmail: 'whale@globerise.com',
+    sponsorEmail: 'whale@globerise.eu',
     investment: INVESTMENT_AMOUNT,
     roiRate: 8,
     daysAgo: 32
   },
   // Team4 - Whale's direct #5
   {
-    email: 'team4@globerise.com',
+    email: 'team4@globerise.eu',
     password: DEFAULT_PASSWORD,
     role: UserRole.USER,
     firstName: 'Casey',
     lastName: 'Brown',
-    sponsorEmail: 'whale@globerise.com',
+    sponsorEmail: 'whale@globerise.eu',
     investment: INVESTMENT_AMOUNT,
     roiRate: 8,
     daysAgo: 30
   },
   // Starter - Leader's direct #1
   {
-    email: 'starter@globerise.com',
+    email: 'starter@globerise.eu',
     password: 'Starter@123',
     role: UserRole.USER,
     firstName: 'David',
     lastName: 'Kim',
-    sponsorEmail: 'leader@globerise.com',
+    sponsorEmail: 'leader@globerise.eu',
     investment: INVESTMENT_AMOUNT,
     roiRate: 8,
     daysAgo: 35
   },
   // Member1 - Leader's direct #2
   {
-    email: 'member1@globerise.com',
+    email: 'member1@globerise.eu',
     password: DEFAULT_PASSWORD,
     role: UserRole.USER,
     firstName: 'Morgan',
     lastName: 'Davis',
-    sponsorEmail: 'leader@globerise.com',
+    sponsorEmail: 'leader@globerise.eu',
     investment: INVESTMENT_AMOUNT,
     roiRate: 8,
     daysAgo: 33
   },
   // Newbie - Starter's direct #1
   {
-    email: 'newbie@globerise.com',
+    email: 'newbie@globerise.eu',
     password: 'Newbie@123',
     role: UserRole.USER,
     firstName: 'Emma',
     lastName: 'Wilson',
-    sponsorEmail: 'starter@globerise.com',
+    sponsorEmail: 'starter@globerise.eu',
     investment: INVESTMENT_AMOUNT,
     roiRate: 8,
     daysAgo: 25
