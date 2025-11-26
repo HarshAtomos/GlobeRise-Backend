@@ -6,10 +6,18 @@
 2. [Refresh Tokens & Logout](#refresh-tokens--logout)
 3. [Password Reset](#password-reset)
 4. [User Profiles](#user-profiles)
-5. [Two-Factor Authentication (2FA)](#two-factor-authentication-2fa)
-6. [Session Management](#session-management)
-7. [Admin Panel](#admin-panel)
-8. [Rate Limiting](#rate-limiting)
+5. [Dashboard](#dashboard)
+6. [Wallets & Transfers](#wallets--transfers)
+7. [Investments](#investments)
+8. [Referrals](#referrals)
+9. [Transactions](#transactions)
+10. [Withdrawals](#withdrawals)
+11. [System Configuration](#system-configuration)
+12. [Two-Factor Authentication (2FA)](#two-factor-authentication-2fa)
+13. [Session Management](#session-management)
+14. [Admin Panel](#admin-panel)
+15. [Admin Reports](#admin-reports)
+16. [Rate Limiting](#rate-limiting)
 
 ---
 
@@ -430,6 +438,381 @@ Authorization: Bearer <access_token>
 
 ---
 
+## Dashboard
+
+### Get Dashboard Stats (Live)
+
+**GET** `/api/dashboard/stats`
+
+Returns aggregated statistics for the user dashboard.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "rank": "NAVIGATOR",
+    "totalEarnings": "1250.50",
+    "teamBusiness": "50000.00",
+    "directBusiness": "10000.00",
+    "lastMonthBusiness": "45000.00",
+    "walletBalances": {
+      "fiat": "100.00",
+      "deposit": "5000.00",
+      "staking": "0.00",
+      "reward": "50.50",
+      "withdrawal": "0.00"
+    }
+  }
+}
+```
+
+### Get Earnings Chart
+
+**GET** `/api/dashboard/chart`
+
+Returns daily earnings data for the last 7 days.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    { "date": "2023-10-01", "amount": "12.50" },
+    { "date": "2023-10-02", "amount": "15.00" }
+  ]
+}
+```
+
+---
+
+## Wallets & Transfers
+
+### Get Wallet Balances
+
+**GET** `/api/wallets`
+
+Retrieve current balances for all user wallets.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Wallet balances retrieved",
+  "data": {
+    "fiat": "100.50",
+    "deposit": "5000.00",
+    "staking": "2000.00",
+    "reward": "125.75",
+    "withdrawal": "50.00"
+  }
+}
+```
+
+---
+
+### Internal Transfer
+
+**POST** `/api/wallets/transfer`
+
+Transfer funds between wallets (e.g., Reward to Deposit for re-investment).
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+
+```json
+{
+  "fromWallet": "REWARD",
+  "toWallet": "DEPOSIT",
+  "amount": 50
+}
+```
+
+**Allowed Flows:**
+- `REWARD` -> `DEPOSIT` (Compound)
+- `REWARD` -> `WITHDRAWAL` (Prepare for cashout)
+
+---
+
+## Investments
+
+### Create Package (Active Investment)
+
+**POST** `/api/investments/package`
+
+Purchase a new investment package using funds from Fiat Wallet. Funds are moved to Deposit Wallet and locked.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+
+```json
+{
+  "amount": 1000
+}
+```
+
+**Rules:**
+- Amount must be positive.
+- Must have sufficient `fiatBalance`.
+- **Progressive Rule:** New amount must be >= max previous investment.
+- **Downline Rule:** Amount must be >= referrer's max active package (if applicable).
+
+---
+
+### Create Fixed Deposit (Staking)
+
+**POST** `/api/investments/fixed`
+
+Create a fixed-term deposit using funds from Fiat Wallet. Funds are moved to Staking Wallet and locked.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+
+```json
+{
+  "amount": 500,
+  "durationMonths": 6
+}
+```
+
+### Get Investment History
+
+**GET** `/api/investments/my`
+
+Returns a list of all active and completed investments with total ROI paid.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+## Referrals
+
+### Get My Referral Tree
+
+**GET** `/api/referrals/tree`
+
+Returns your referral code, upline info, and up to 16 direct referrals with detailed stats.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "myCode": "ABCDEFGH",
+    "upline": {
+      "id": "...",
+      "email": "upline@example.com",
+      "rank": "LEGEND",
+      "totalDownlines": 150
+    },
+    "referrals": [
+      {
+        "id": "childId",
+        "email": "child@example.com",
+        "rank": "STARTER",
+        "directCount": 3,
+        "teamCount": 9,
+        "totalTeamBusiness": "1234.56",
+        "lastMonthBusiness": "500.00"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Withdrawals
+
+### Request Withdrawal
+
+**POST** `/api/withdrawals/request`
+
+Submit a request to withdraw funds. Funds are immediately debited from the `Withdrawal Wallet` and held in `PENDING` status.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+
+```json
+{
+  "amount": 500
+}
+```
+
+**Rules:**
+- Only open on **Mondays** (UTC).
+- Must have sufficient balance in `Withdrawal Wallet`.
+
+---
+
+### Get Pending Withdrawals (Admin)
+
+**GET** `/api/withdrawals/pending`
+
+List all pending withdrawal requests.
+
+**Headers:**
+
+```
+Authorization: Bearer <admin_access_token>
+```
+
+---
+
+### Approve Withdrawal (Admin)
+
+**POST** `/api/withdrawals/:transactionId/approve`
+
+Approve a pending withdrawal. Status becomes `COMPLETED`.
+
+**Headers:**
+
+```
+Authorization: Bearer <admin_access_token>
+```
+
+**Request Body:**
+
+```json
+{
+  "feePercentage": 10 // Optional, default 10%
+}
+```
+
+---
+
+### Reject Withdrawal (Admin)
+
+**POST** `/api/withdrawals/:transactionId/reject`
+
+Reject a withdrawal. Funds are refunded to the user's `Withdrawal Wallet`.
+
+**Headers:**
+
+```
+Authorization: Bearer <admin_access_token>
+```
+
+**Request Body:**
+
+```json
+{
+  "reason": "Invalid bank details"
+}
+```
+
+---
+
+## System Configuration
+
+**Note:** All config endpoints require the `ADMIN` role.
+
+### Get Global Plan Config
+
+**GET** `/api/config/plan`
+
+Retrieve current level income rates, withdrawal fees, etc.
+
+**Headers:**
+
+```
+Authorization: Bearer <admin_access_token>
+```
+
+### Update Global Plan Config
+
+**PUT** `/api/config/plan`
+
+Update settings.
+
+**Request Body:**
+
+```json
+{
+  "levelIncomeRates": { "1": 10, "2": 5 },
+  "withdrawalFeePercent": 10,
+  "minWithdrawalAmount": 10
+}
+```
+
+### Get Ranks
+
+**GET** `/api/config/ranks`
+
+List all configured ranks and their requirements.
+
+### Upsert Rank
+
+**POST** `/api/config/ranks`
+
+Create or update a rank definition.
+
+**Request Body:**
+
+```json
+{
+  "name": "NAVIGATOR",
+  "order": 4,
+  "requiredBusiness": 100000,
+  "bonusAmount": 3000,
+  "royaltyPercent": 1.0
+}
+```
+
+---
+
 ## Two-Factor Authentication (2FA)
 
 ### Setup 2FA
@@ -791,6 +1174,272 @@ Authorization: Bearer <access_token>
 
 ---
 
+### Manual Triggers (Admin Only)
+
+**POST** `/api/admin/roi/trigger`
+Manually trigger the daily ROI calculation.
+
+**POST** `/api/admin/rank/trigger`
+Manually trigger the daily Rank Calculation engine.
+
+**POST** `/api/admin/royalty/trigger`
+Manually trigger the monthly Royalty Distribution.
+
+**Headers:**
+
+```
+Authorization: Bearer <admin_access_token>
+```
+
+---
+
+## Transactions
+
+### Get Transaction History
+
+**GET** `/api/transactions/my`
+
+Get user's transaction history with filtering and pagination.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+
+- `type` (optional): Filter by type - `ROI`, `COMMISSION`, `ROYALTY`, `RANK_BONUS`, `REWARDS` (all reward types), `TRANSFER`, `INVESTMENT`, `WITHDRAWAL`, `DEPOSIT`, `ALL`
+- `wallet` (optional): Filter by wallet - `FIAT`, `DEPOSIT`, `STAKING`, `REWARD`, `WITHDRAWAL`, `ALL`
+- `page` (default: 1)
+- `limit` (default: 20)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "transactions": [
+      {
+        "id": "...",
+        "amount": "50.00",
+        "type": "ROI",
+        "status": "COMPLETED",
+        "sourceWallet": null,
+        "destWallet": "REWARD",
+        "description": "Daily ROI",
+        "createdAt": "2025-01-01T00:00:00.000Z",
+        "metadata": { "day": 15 }
+      }
+    ],
+    "pagination": {
+      "total": 150,
+      "page": 1,
+      "limit": 20,
+      "totalPages": 8
+    }
+  }
+}
+```
+
+---
+
+### Get Earnings Summary
+
+**GET** `/api/transactions/earnings`
+
+Get breakdown of earnings by type.
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "breakdown": {
+      "ROI": { "total": "1500.00", "count": 30 },
+      "COMMISSION": { "total": "500.00", "count": 15 },
+      "ROYALTY": { "total": "200.00", "count": 2 },
+      "RANK_BONUS": { "total": "250.00", "count": 1 }
+    },
+    "totalEarnings": "2450.00"
+  }
+}
+```
+
+---
+
+## Admin Reports
+
+**Note:** All report endpoints require the `ADMIN` role.
+
+### Get Platform Summary
+
+**GET** `/api/admin/reports/summary`
+
+Get comprehensive platform statistics.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "users": {
+      "total": 1000,
+      "verified": 850,
+      "unverified": 150
+    },
+    "investments": {
+      "totalVolume": "5000000.00",
+      "totalCount": 2500,
+      "activeCount": 1800
+    },
+    "withdrawals": {
+      "totalVolume": "1500000.00",
+      "totalCount": 800,
+      "pendingCount": 25
+    },
+    "commissions": { "total": "350000.00" },
+    "royalties": { "total": "50000.00" },
+    "rankDistribution": [
+      { "rank": "NONE", "count": 500 },
+      { "rank": "EXPLORER", "count": 200 }
+    ]
+  }
+}
+```
+
+---
+
+### Get Investment Report
+
+**GET** `/api/admin/reports/investments`
+
+Get investment volume chart data.
+
+**Query Parameters:**
+
+- `period`: `daily`, `weekly`, `monthly` (default: `daily`)
+- `days`: Number of days to include (default: 30)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "period": "daily",
+    "days": 30,
+    "data": [
+      { "date": "2025-01-01", "volume": "50000.00" },
+      { "date": "2025-01-02", "volume": "75000.00" }
+    ],
+    "total": "1500000.00"
+  }
+}
+```
+
+---
+
+### Get User Growth Report
+
+**GET** `/api/admin/reports/users`
+
+Get new user signups over time.
+
+**Query Parameters:**
+
+- `days`: Number of days to include (default: 30)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "days": 30,
+    "data": [
+      { "date": "2025-01-01", "count": 15 },
+      { "date": "2025-01-02", "count": 22 }
+    ],
+    "totalNewUsers": 450
+  }
+}
+```
+
+---
+
+### Get Commission Report
+
+**GET** `/api/admin/reports/commissions`
+
+Get commission payouts breakdown.
+
+**Query Parameters:**
+
+- `days`: Number of days to include (default: 30)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "days": 30,
+    "breakdown": {
+      "COMMISSION": { "total": "50000.00", "count": 500 },
+      "ROI": { "total": "120000.00", "count": 3000 },
+      "ROYALTY": { "total": "10000.00", "count": 50 },
+      "RANK_BONUS": { "total": "5000.00", "count": 10 }
+    },
+    "dailyRoiTrend": [
+      { "date": "2025-01-01", "amount": "4000.00" }
+    ]
+  }
+}
+```
+
+---
+
+### Get Top Performers
+
+**GET** `/api/admin/reports/top-performers`
+
+Get top users by earnings, referrals, and investments.
+
+**Query Parameters:**
+
+- `limit`: Number of users per category (default: 10)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "topEarners": [
+      { "userId": "...", "email": "...", "name": "John Doe", "rank": "GRANDMASTER", "totalEarnings": "75000.00" }
+    ],
+    "topReferrers": [
+      { "userId": "...", "email": "...", "name": "Jane Smith", "rank": "NAVIGATOR", "referralCount": 50 }
+    ],
+    "topInvestors": [
+      { "userId": "...", "email": "...", "name": "Mike Chen", "rank": "LEGEND", "totalInvested": "100000.00" }
+    ]
+  }
+}
+```
+
+---
+
 ## Rate Limiting
 
 The API implements rate limiting on various endpoints:
@@ -846,40 +1495,56 @@ TWO_FACTOR_APP_NAME=GlobeRise
 - ✅ Session tracking and management
 - ✅ Secure backup codes for 2FA
 - ✅ Token rotation for enhanced security
+- ✅ Dormant referrer check (90 days inactive)
 
 ---
 
-## Referrals
+## Blockchain Integration
 
-### Get My Referral Tree
+The backend integrates with the GlobeRise smart contracts on Ethereum/BSC.
 
-**GET** `/api/referrals/tree`
+### Environment Variables
 
-Returns your own referral code and up to 16 direct referrals, each with their downline counts.
+Add these to enable blockchain integration:
 
-**Headers:**
+```env
+# Blockchain RPC
+RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY
 
+# Contract Addresses (from deployment)
+PLATFORM_ADDRESS=0x...
+TOKEN_ADDRESS=0x...
 ```
-Authorization: Bearer <access_token>
+
+### On-Chain Data
+
+The `BlockchainService` can read:
+- User registration and rank
+- Investment history
+- Withdrawable balance
+- Staking packages
+- Platform statistics
+
+User transactions (invest, withdraw) are signed via frontend wallet (MetaMask/Trust Wallet).
+
+---
+
+## Demo Seed Script
+
+Run the demo seed to create test accounts:
+
+```bash
+npx ts-node src/scripts/seed-demo.ts
 ```
 
-**Response:**
+### Demo Credentials
 
-```json
-{
-  "success": true,
-  "message": "Referral tree fetched",
-  "data": {
-    "myCode": "ABCDEFGH",
-    "referrals": [
-      {
-        "id": "childId",
-        "email": "child@example.com",
-        "directCount": 3,
-        "teamCount": 9,
-        "teamVolume": 1234.56
-      }
-    ]
-  }
-}
-```
+| Email | Password | Rank |
+|-------|----------|------|
+| admin@globerise.com | Admin@123 | Admin |
+| whale@globerise.com | Whale@123 | GRANDMASTER |
+| leader@globerise.com | Leader@123 | NAVIGATOR |
+| starter@globerise.com | Starter@123 | EXPLORER |
+| newbie@globerise.com | Newbie@123 | NONE |
+
+Additional test users: `team1-10@demo.globerise.com`, `member1-5@demo.globerise.com` (password: `Demo@123`)

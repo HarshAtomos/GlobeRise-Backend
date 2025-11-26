@@ -2,6 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { ResponseHandler } from '../utils/response';
 import { UserRole } from '../types';
+import roiService from '../services/roi.service';
+import rankService from '../services/rank.service';
+import royaltyService from '../services/royalty.service';
+import blockchainService from '../services/blockchain.service';
 
 class AdminController {
     // Get all users (admin only)
@@ -35,6 +39,7 @@ class AdminController {
                         two_factor_enabled: true,
                         created_at: true,
                         updated_at: true,
+                        rank: true,
                     },
                     orderBy: { created_at: 'desc' },
                 }),
@@ -72,6 +77,8 @@ class AdminController {
                     created_at: true,
                     updated_at: true,
                     profile: true,
+                    rank: true,
+                    rankHistory: true,
                 },
             });
 
@@ -212,8 +219,79 @@ class AdminController {
             next(error);
         }
     }
+
+    // Manually trigger Daily ROI calculation (Admin only)
+    async triggerDailyRoi(req: Request, res: Response, next: NextFunction) {
+        try {
+            console.log('Admin triggered Daily ROI Engine...');
+            const result = await roiService.processDailyRoi();
+
+            return ResponseHandler.success(res, 'Daily ROI processed successfully', {
+                processedCount: result.processed,
+                totalPayout: result.totalAmount
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Manually trigger Daily Rank Check (Admin only)
+    async triggerRankCheck(req: Request, res: Response, next: NextFunction) {
+        try {
+            console.log('Admin triggered Daily Rank Engine...');
+            await rankService.runDailyRankCheck();
+
+            return ResponseHandler.success(res, 'Rank Engine executed successfully');
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Manually trigger Monthly Royalty Distribution (Admin only)
+    async triggerRoyalty(req: Request, res: Response, next: NextFunction) {
+        try {
+            console.log('Admin triggered Monthly Royalty Engine...');
+            await royaltyService.distributeRoyalty();
+
+            return ResponseHandler.success(res, 'Royalty Engine executed successfully');
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Debug: Fetch on-chain user info (Admin only)
+    async getOnChainUser(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { address } = req.params;
+            if (!address) {
+                return ResponseHandler.badRequest(res, 'Address is required');
+            }
+
+            if (!blockchainService.isConnected()) {
+                return ResponseHandler.badRequest(res, 'Blockchain service is not connected');
+            }
+
+            const [rankName, investments, stakes, withdrawableBalance, isDormant] =
+                await Promise.all([
+                    blockchainService.getUserRankName(address),
+                    blockchainService.getUserInvestments(address),
+                    blockchainService.getUserStakes(address),
+                    blockchainService.getWithdrawableBalance(address),
+                    blockchainService.isDormant(address),
+                ]);
+
+            return ResponseHandler.success(res, 'On-chain user info retrieved', {
+                address,
+                rankName,
+                withdrawableBalance,
+                isDormant,
+                investments,
+                stakes,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 export default new AdminController();
-
-

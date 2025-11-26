@@ -13,6 +13,47 @@ enum UserRole {
   MODERATOR
 }
 
+enum WalletType {
+  FIAT
+  DEPOSIT
+  STAKING
+  REWARD
+  WITHDRAWAL
+}
+
+enum TransactionType {
+  DEPOSIT        // External -> Fiat
+  TRANSFER       // Wallet -> Wallet
+  INVESTMENT     // Fiat -> Deposit/Staking
+  ROI            // System -> Reward
+  COMMISSION     // System -> Reward (Referral/Level/Bonus)
+  WITHDRAWAL     // Withdrawal -> External
+  ADMIN_ADJUST   // Admin manual credit/debit
+  STAKING_RETURN // Staking -> Reward (Maturity)
+  ROYALTY        // System -> Reward (Monthly)
+  RANK_BONUS     // System -> Reward (One-time)
+}
+
+enum TransactionStatus {
+  COMPLETED
+  PENDING
+  REJECTED
+  FAILED
+}
+
+enum InvestmentType {
+  PACKAGE        // Deposit Wallet (MLM Active)
+  FIXED          // Staking Wallet (Fixed Term)
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+// Removed Rank Enum - Now Dynamic (String)
+
 model User {
   id                          String         @id @default(cuid())
   email                       String         @unique
@@ -28,18 +69,28 @@ model User {
   created_at                  DateTime       @default(now())
   updated_at                  DateTime       @updatedAt
 
+  // MLM Rank (Stored as String, references RankConfig.name)
+  rank                        String         @default("NONE")
+
   // Relations
   profile                UserProfile?
   refreshTokens          RefreshToken[]
   passwordResets         PasswordReset[]
   sessions               UserSession[]
   twoFactorAuth          TwoFactorAuth?
-
+  
   // Referral program
   referralCode                String?        @unique
   referredById                String?
   referrer                    User?          @relation("Referrals", fields: [referredById], references: [id])
   referrals                   User[]         @relation("Referrals")
+  
+  // Financials
+  wallets                 UserWallets?
+  transactions            WalletTransaction[]
+  investments             Investment[]
+  rankHistory             RankHistory[]
+  businessSnapshots       BusinessSnapshot[]
 
   @@index([email])
   @@index([google_id])
@@ -47,6 +98,110 @@ model User {
   @@index([password_reset_token])
   @@index([referralCode])
   @@index([referredById])
+  @@index([rank])
+}
+
+// Dynamic Configuration for MLM Plan
+// Allows Admin to update percentages and thresholds without code changes
+
+model PlanConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique // e.g. "GLOBAL_SETTINGS"
+  
+  // Level Income Configuration
+  // JSON: { "1": 10, "2": 5, ... "16": 1 }
+  levelIncomeRates Json 
+
+  // Global Settings
+  withdrawalFeePercent Decimal @default(10.0) @db.Decimal(5, 2)
+  minWithdrawalAmount  Decimal @default(10.0) @db.Decimal(20, 8)
+  
+  updatedAt   DateTime @updatedAt
+}
+
+model RankConfig {
+  id               String   @id @default(cuid())
+  name             String   @unique // e.g. "NAVIGATOR"
+  order            Int      @unique // 1, 2, 3... for hierarchy comparison
+  
+  requiredBusiness Decimal  @db.Decimal(20, 8) // e.g. 100,000
+  
+  // One-time Bonus
+  bonusAmount      Decimal  @default(0.0) @db.Decimal(20, 8)
+  
+  // Royalty
+  royaltyPercent   Decimal  @default(0.0) @db.Decimal(5, 2) // % of CTO
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([order])
+}
+
+model UserWallets {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // The 5 Wallets
+  fiatBalance       Decimal  @default(0.0)  @db.Decimal(20, 8)
+  depositBalance    Decimal  @default(0.0)  @db.Decimal(20, 8) // Locked active packages
+  stakingBalance    Decimal  @default(0.0)  @db.Decimal(20, 8) // Locked fixed term
+  rewardBalance     Decimal  @default(0.0)  @db.Decimal(20, 8) // Income pool
+  withdrawalBalance Decimal  @default(0.0)  @db.Decimal(20, 8) // Ready for exit
+
+  updatedAt         DateTime @updatedAt
+}
+
+model WalletTransaction {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amount          Decimal         @db.Decimal(20, 8)
+  type            TransactionType
+  status          TransactionStatus @default(COMPLETED)
+  
+  sourceWallet    WalletType?
+  destWallet      WalletType?
+  description     String?
+  
+  // Audit / Source Tracking
+  referenceId     String?         // ID of User, Investment, or External Tx
+  referenceType   String?         // "USER", "INVESTMENT", "EXTERNAL"
+  metadata        Json?           // Extra details (Level, source user info, etc)
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Investment {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amount          Decimal          @db.Decimal(20, 8)
+  type            InvestmentType
+  status          InvestmentStatus @default(ACTIVE)
+  
+  roiRate         Decimal          @default(0.0) @db.Decimal(5, 2) // e.g., 8.00 for 8%
+  durationDays    Int              @default(30)
+  
+  startDate       DateTime         @default(now())
+  lastRoiDate     DateTime?
+  endDate         DateTime?        // For fixed term
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
 }
 
 model UserProfile {
@@ -64,6 +219,41 @@ model UserProfile {
   country    String?
   updatedAt  DateTime  @updatedAt
 
+  @@index([userId])
+}
+
+// Tracks Rank Promotions
+model RankHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  rank        String   // Changed from Enum to String
+  achievedAt  DateTime @default(now())
+  
+  // Snapshot of qualification data at time of achievement
+  totalBusiness Decimal @db.Decimal(20, 8)
+  strongestLeg  Decimal @db.Decimal(20, 8)
+  otherLegs     Decimal @db.Decimal(20, 8)
+
+  @@index([userId])
+  @@index([rank])
+}
+
+// Monthly Snapshot for Growth Logic (Royalty)
+model BusinessSnapshot {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  month         Int      // 1-12
+  year          Int      // e.g. 2025
+  
+  totalTeamBusiness Decimal @db.Decimal(20, 8)
+  
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, month, year]) // One snapshot per user per month
   @@index([userId])
 }
 
