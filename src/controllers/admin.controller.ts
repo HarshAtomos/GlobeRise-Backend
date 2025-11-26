@@ -5,6 +5,7 @@ import { UserRole } from '../types';
 import roiService from '../services/roi.service';
 import rankService from '../services/rank.service';
 import royaltyService from '../services/royalty.service';
+import blockchainService from '../services/blockchain.service';
 
 class AdminController {
     // Get all users (admin only)
@@ -253,6 +254,40 @@ class AdminController {
             await royaltyService.distributeRoyalty();
 
             return ResponseHandler.success(res, 'Royalty Engine executed successfully');
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Debug: Fetch on-chain user info (Admin only)
+    async getOnChainUser(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { address } = req.params;
+            if (!address) {
+                return ResponseHandler.badRequest(res, 'Address is required');
+            }
+
+            if (!blockchainService.isConnected()) {
+                return ResponseHandler.badRequest(res, 'Blockchain service is not connected');
+            }
+
+            const [rankName, investments, stakes, withdrawableBalance, isDormant] =
+                await Promise.all([
+                    blockchainService.getUserRankName(address),
+                    blockchainService.getUserInvestments(address),
+                    blockchainService.getUserStakes(address),
+                    blockchainService.getWithdrawableBalance(address),
+                    blockchainService.isDormant(address),
+                ]);
+
+            return ResponseHandler.success(res, 'On-chain user info retrieved', {
+                address,
+                rankName,
+                withdrawableBalance,
+                isDormant,
+                investments,
+                stakes,
+            });
         } catch (error) {
             next(error);
         }

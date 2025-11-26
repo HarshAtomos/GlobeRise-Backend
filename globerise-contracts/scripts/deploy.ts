@@ -23,6 +23,14 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   const network = await ethers.provider.getNetwork();
 
+  // Check if deployer is available
+  if (!deployer) {
+    console.error("❌ Error: No deployer account found!");
+    console.error("   Please set DEPLOYER_PRIVATE_KEY in your .env file");
+    console.error("   Example: DEPLOYER_PRIVATE_KEY=your_private_key_without_0x");
+    process.exit(1);
+  }
+
   console.log("╔════════════════════════════════════════════════════╗");
   console.log("║        GLOBERISE PLATFORM DEPLOYMENT              ║");
   console.log("╚════════════════════════════════════════════════════╝\n");
@@ -30,7 +38,16 @@ async function main() {
   console.log("Deployment Details:");
   console.log("├─ Network:", network.name, `(Chain ID: ${network.chainId})`);
   console.log("├─ Deployer:", deployer.address);
-  console.log("├─ Balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "ETH\n");
+  
+  const balance = await ethers.provider.getBalance(deployer.address);
+  console.log("├─ Balance:", ethers.formatEther(balance), "ETH");
+  
+  // Check if balance is sufficient (need at least 0.01 ETH for deployment)
+  if (balance < ethers.parseEther("0.01")) {
+    console.warn("⚠️  Warning: Low balance! You may need more ETH for gas fees.");
+    console.warn("   Get Sepolia ETH from: https://sepoliafaucet.com/");
+  }
+  console.log("");
 
   // Dev wallet for gas/dev fee portion (2.5% of withdrawals)
   // In production, use a dedicated dev wallet address

@@ -1,0 +1,711 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0x50deB505aB03E432E3b767e8D47cc6cc35d80A17",
+      "txHash": "0xf111e16f29dce90cffda969debe2dec94d51bb6f5f6d28ce3354fd17026c644b",
+      "kind": "uups"
+    }
+  ],
+  "impls": {
+    "7f4fbdf9dfc6510347976a4c3384e50ddba3dbb0ef3bae3df4298981803a60b1": {
+      "address": "0xc8bC76a6eF6dF08df2B4B58c7ec5980486F850b3",
+      "txHash": "0x799d212b9e19b8e98edde25f3e96d5657c869b0ea63b2eccc37f753ebc55f7eb",
+      "layout": {
+        "solcVersion": "0.8.30",
+        "storage": [
+          {
+            "label": "grtToken",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(IERC20)2600",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:121"
+          },
+          {
+            "label": "usdtToken",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IERC20)2600",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:124"
+          },
+          {
+            "label": "minInvestment",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:127"
+          },
+          {
+            "label": "roiPercentages",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_array(t_uint256)3_storage",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:130"
+          },
+          {
+            "label": "roiCaps",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_array(t_uint256)3_storage",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:133"
+          },
+          {
+            "label": "directReferralRate",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_uint256",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:136"
+          },
+          {
+            "label": "levelIncomeRates",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_array(t_uint256)16_storage",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:139"
+          },
+          {
+            "label": "rankNames",
+            "offset": 0,
+            "slot": "26",
+            "type": "t_array(t_string_storage)16_storage",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:142"
+          },
+          {
+            "label": "rankRequirements",
+            "offset": 0,
+            "slot": "42",
+            "type": "t_array(t_uint256)16_storage",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:145"
+          },
+          {
+            "label": "rankBonuses",
+            "offset": 0,
+            "slot": "58",
+            "type": "t_array(t_uint256)16_storage",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:148"
+          },
+          {
+            "label": "minWithdrawal",
+            "offset": 0,
+            "slot": "74",
+            "type": "t_uint256",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:151"
+          },
+          {
+            "label": "treasury",
+            "offset": 0,
+            "slot": "75",
+            "type": "t_address",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:154"
+          },
+          {
+            "label": "devWallet",
+            "offset": 0,
+            "slot": "76",
+            "type": "t_address",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:157"
+          },
+          {
+            "label": "platformFeeRate",
+            "offset": 0,
+            "slot": "77",
+            "type": "t_uint256",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:160"
+          },
+          {
+            "label": "stakingRates",
+            "offset": 0,
+            "slot": "78",
+            "type": "t_array(t_uint256)5_storage",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:169"
+          },
+          {
+            "label": "stakingDurations",
+            "offset": 0,
+            "slot": "83",
+            "type": "t_array(t_uint8)5_storage",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:172"
+          },
+          {
+            "label": "users",
+            "offset": 0,
+            "slot": "84",
+            "type": "t_mapping(t_address,t_struct(User)9781_storage)",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:182"
+          },
+          {
+            "label": "investments",
+            "offset": 0,
+            "slot": "85",
+            "type": "t_mapping(t_address,t_array(t_struct(Investment)9742_storage)dyn_storage)",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:185"
+          },
+          {
+            "label": "stakingPackages",
+            "offset": 0,
+            "slot": "86",
+            "type": "t_mapping(t_address,t_array(t_struct(StakingPackage)9756_storage)dyn_storage)",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:188"
+          },
+          {
+            "label": "monthlyActivity",
+            "offset": 0,
+            "slot": "87",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(MonthlyActivity)9791_storage))",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:191"
+          },
+          {
+            "label": "withdrawalRequests",
+            "offset": 0,
+            "slot": "88",
+            "type": "t_mapping(t_address,t_array(t_struct(WithdrawalRequest)9803_storage)dyn_storage)",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:195"
+          },
+          {
+            "label": "lastActivityTime",
+            "offset": 0,
+            "slot": "89",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:198"
+          },
+          {
+            "label": "withdrawableBalance",
+            "offset": 0,
+            "slot": "90",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:201"
+          },
+          {
+            "label": "totalUsers",
+            "offset": 0,
+            "slot": "91",
+            "type": "t_uint256",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:204"
+          },
+          {
+            "label": "totalInvestments",
+            "offset": 0,
+            "slot": "92",
+            "type": "t_uint256",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:207"
+          },
+          {
+            "label": "totalCommissionsDistributed",
+            "offset": 0,
+            "slot": "93",
+            "type": "t_uint256",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:210"
+          },
+          {
+            "label": "totalFeesCollected",
+            "offset": 0,
+            "slot": "94",
+            "type": "t_uint256",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:213"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "95",
+            "type": "t_array(t_uint256)45_storage",
+            "contract": "GlobeRisePlatform",
+            "src": "contracts\\GlobeRisePlatform.sol:1481"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)27_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessControlStorage)37_storage": {
+            "label": "struct AccessControlUpgradeable.AccessControlStorage",
+            "members": [
+              {
+                "label": "_roles",
+                "type": "t_mapping(t_bytes32,t_struct(RoleData)27_storage)",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(InitializableStorage)163_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(PausableStorage)341_storage": {
+            "label": "struct PausableUpgradeable.PausableStorage",
+            "members": [
+              {
+                "label": "_paused",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(ReentrancyGuardStorage)417_storage": {
+            "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+            "members": [
+              {
+                "label": "_status",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(RoleData)27_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_string_storage)16_storage": {
+            "label": "string[16]",
+            "numberOfBytes": "512"
+          },
+          "t_array(t_struct(Investment)9742_storage)dyn_storage": {
+            "label": "struct GlobeRisePlatform.Investment[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(StakingPackage)9756_storage)dyn_storage": {
+            "label": "struct GlobeRisePlatform.StakingPackage[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(WithdrawalRequest)9803_storage)dyn_storage": {
+            "label": "struct GlobeRisePlatform.WithdrawalRequest[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)16_storage": {
+            "label": "uint256[16]",
+            "numberOfBytes": "512"
+          },
+          "t_array(t_uint256)3_storage": {
+            "label": "uint256[3]",
+            "numberOfBytes": "96"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]",
+            "numberOfBytes": "1440"
+          },
+          "t_array(t_uint256)5_storage": {
+            "label": "uint256[5]",
+            "numberOfBytes": "160"
+          },
+          "t_array(t_uint8)5_storage": {
+            "label": "uint8[5]",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IERC20)2600": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_enum(WithdrawalStatus)9813": {
+            "label": "enum GlobeRisePlatform.WithdrawalStatus",
+            "members": [
+              "PENDING",
+              "APPROVED",
+              "COMPLETED",
+              "REJECTED"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_enum(WithdrawalType)9807": {
+            "label": "enum GlobeRisePlatform.WithdrawalType",
+            "members": [
+              "GRT_ONLY",
+              "GRT_USDT_SPLIT"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_array(t_struct(Investment)9742_storage)dyn_storage)": {
+            "label": "mapping(address => struct GlobeRisePlatform.Investment[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_array(t_struct(StakingPackage)9756_storage)dyn_storage)": {
+            "label": "mapping(address => struct GlobeRisePlatform.StakingPackage[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_array(t_struct(WithdrawalRequest)9803_storage)dyn_storage)": {
+            "label": "mapping(address => struct GlobeRisePlatform.WithdrawalRequest[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(MonthlyActivity)9791_storage))": {
+            "label": "mapping(address => mapping(uint256 => struct GlobeRisePlatform.MonthlyActivity))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(User)9781_storage)": {
+            "label": "mapping(address => struct GlobeRisePlatform.User)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(MonthlyActivity)9791_storage)": {
+            "label": "mapping(uint256 => struct GlobeRisePlatform.MonthlyActivity)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Investment)9742_storage": {
+            "label": "struct GlobeRisePlatform.Investment",
+            "members": [
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "startTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "passiveROIClaimed",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "maxClaimable",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "referrer",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "active",
+                "type": "t_bool",
+                "offset": 20,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_struct(MonthlyActivity)9791_storage": {
+            "label": "struct GlobeRisePlatform.MonthlyActivity",
+            "members": [
+              {
+                "label": "month",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "newBusiness",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "teamVolume",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "qualifiesForRoyalty",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(StakingPackage)9756_storage": {
+            "label": "struct GlobeRisePlatform.StakingPackage",
+            "members": [
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "durationTier",
+                "type": "t_uint8",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "startTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "maturityTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "monthlyRate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "claimed",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_struct(User)9781_storage": {
+            "label": "struct GlobeRisePlatform.User",
+            "members": [
+              {
+                "label": "sponsor",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "leftLeg",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "rightLeg",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "directReferrals",
+                "type": "t_array(t_address)dyn_storage",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "leftVolume",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "rightVolume",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "rank",
+                "type": "t_uint8",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "totalCommissions",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "totalInvested",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "8"
+              },
+              {
+                "label": "registered",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "9"
+              },
+              {
+                "label": "registrationTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "10"
+              }
+            ],
+            "numberOfBytes": "352"
+          },
+          "t_struct(WithdrawalRequest)9803_storage": {
+            "label": "struct GlobeRisePlatform.WithdrawalRequest",
+            "members": [
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "withdrawalType",
+                "type": "t_enum(WithdrawalType)9807",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "requestTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(WithdrawalStatus)9813",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Pausable": [
+            {
+              "contract": "PausableUpgradeable",
+              "label": "_paused",
+              "type": "t_bool",
+              "src": "@openzeppelin\\contracts-upgradeable\\utils\\PausableUpgradeable.sol:21",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.AccessControl": [
+            {
+              "contract": "AccessControlUpgradeable",
+              "label": "_roles",
+              "type": "t_mapping(t_bytes32,t_struct(RoleData)27_storage)",
+              "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:62",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "timestamp": "2025-11-26T07:22:28.452Z",
+  "contracts": {
+    "GlobeRiseToken": "0x983094412697e543B4EE295cE295a0D3eeA7aD76",
+    "USDT": "0x7969D4408FE692D3143316E5589dec3f9De9640C",
+    "GlobeRisePlatform": {
+      "proxy": "0x50deB505aB03E432E3b767e8D47cc6cc35d80A17",
+      "implementation": "0xc8bC76a6eF6dF08df2B4B58c7ec5980486F850b3",
+      "proxyAdmin": "0x0000000000000000000000000000000000000000"
+    }
+  },
+  "deployer": "0x29496350FD3623abF629b280d8A6a9E49Fa7c8b1",
+  "devWallet": "0x29496350FD3623abF629b280d8A6a9E49Fa7c8b1",
+  "config": {
+    "minInvestment": "100.0",
+    "minWithdrawal": "10.0",
+    "directReferralRate": 5,
+    "platformFeeRate": 10,
+    "withdrawalWindow": "Monday only",
+    "stakingTiers": [
+      {
+        "duration": "3 months",
+        "rate": "1.25%"
+      },
+      {
+        "duration": "6 months",
+        "rate": "1.75%"
+      },
+      {
+        "duration": "12 months",
+        "rate": "2.25%"
+      },
+      {
+        "duration": "18 months",
+        "rate": "4%"
+      },
+      {
+        "duration": "24 months",
+        "rate": "4.75%"
+      }
+    ]
+  }
+}

@@ -1,0 +1,2911 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GlobeRise Backend API",
+    "description": "DeFi and MLM platform backend API with 4-Wallet architecture, investment packages, referral system, and blockchain integration.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "GlobeRise Support",
+      "email": "support@globerise.com"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:6969/api",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.globerise.com/api",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    { "name": "Health", "description": "Server health check" },
+    { "name": "Auth", "description": "Authentication and authorization" },
+    { "name": "Profile", "description": "User profile management" },
+    { "name": "2FA", "description": "Two-factor authentication" },
+    { "name": "Sessions", "description": "Session management" },
+    { "name": "Dashboard", "description": "User dashboard statistics" },
+    { "name": "Wallets", "description": "Wallet management and transfers" },
+    { "name": "Investments", "description": "Investment packages and staking" },
+    { "name": "Referrals", "description": "Referral tree and network" },
+    { "name": "Transactions", "description": "Transaction history and earnings" },
+    { "name": "Withdrawals", "description": "Withdrawal requests and processing" },
+    { "name": "Admin", "description": "Admin user management" },
+    { "name": "Config", "description": "Admin system configuration" },
+    { "name": "Reports", "description": "Admin analytics and reports" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check",
+        "description": "Check if the server is running",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Server is running",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Server is running" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register new user",
+        "description": "Register a new user with email and password. Optionally include a referral code.",
+        "operationId": "register",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registration successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or email already registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login",
+        "description": "Login with email and password",
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful or 2FA required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/AuthResponse" },
+                    { "$ref": "#/components/schemas/TwoFactorRequiredResponse" }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Verify email",
+        "description": "Verify email address with token sent via email",
+        "operationId": "verifyEmail",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["token"],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 32,
+                    "maxLength": 128,
+                    "description": "Verification token from email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/resend-verification": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Resend verification email",
+        "description": "Resend email verification link",
+        "operationId": "resendVerification",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification email sent if account exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Forgot password",
+        "description": "Request password reset email",
+        "operationId": "forgotPassword",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reset email sent if account exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Reset password",
+        "description": "Reset password using token from email",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["token", "password"],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "Reset token from email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "description": "New password (min 8 chars, 1 uppercase, 1 lowercase, 1 number)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/google": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Google OAuth",
+        "description": "Initiate Google OAuth flow",
+        "operationId": "googleAuth",
+        "responses": {
+          "302": {
+            "description": "Redirect to Google OAuth consent screen"
+          }
+        }
+      }
+    },
+    "/auth/google/callback": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Google OAuth callback",
+        "description": "Handle Google OAuth callback",
+        "operationId": "googleCallback",
+        "responses": {
+          "302": {
+            "description": "Redirect to frontend with token or error"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current user",
+        "description": "Get current authenticated user",
+        "operationId": "getCurrentUser",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "User retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": { "$ref": "#/components/schemas/User" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Refresh token",
+        "description": "Refresh access token using refresh token",
+        "operationId": "refreshToken",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refreshToken"],
+                "properties": {
+                  "refreshToken": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": { "type": "string" },
+                        "refreshToken": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout",
+        "description": "Logout and revoke current refresh token",
+        "operationId": "logout",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refreshToken"],
+                "properties": {
+                  "refreshToken": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logged out successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout-all": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout all devices",
+        "description": "Logout from all devices (revoke all refresh tokens)",
+        "operationId": "logoutAll",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Logged out from all devices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile/me": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Get my profile",
+        "description": "Get current user's profile",
+        "operationId": "getMyProfile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "profile": { "$ref": "#/components/schemas/Profile" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Profile"],
+        "summary": "Update my profile",
+        "description": "Update current user's profile",
+        "operationId": "updateMyProfile",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "profile": { "$ref": "#/components/schemas/Profile" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile/{userId}": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Get user profile",
+        "description": "Get another user's public profile",
+        "operationId": "getUserProfile",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Target user's ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "profile": { "$ref": "#/components/schemas/PublicProfile" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/2fa/setup": {
+      "post": {
+        "tags": ["2FA"],
+        "summary": "Setup 2FA",
+        "description": "Generate secret and QR code for 2FA setup",
+        "operationId": "setup2FA",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "2FA setup initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "secret": { "type": "string", "example": "JBSWY3DPEHPK3PXP" },
+                        "qrCode": { "type": "string", "description": "Base64 encoded QR code image" },
+                        "backupCodes": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/2fa/enable": {
+      "post": {
+        "tags": ["2FA"],
+        "summary": "Enable 2FA",
+        "description": "Enable 2FA after verifying a token",
+        "operationId": "enable2FA",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["token"],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "pattern": "^[0-9]{6}$",
+                    "description": "6-digit TOTP code"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "2FA enabled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid 2FA token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/2fa/disable": {
+      "post": {
+        "tags": ["2FA"],
+        "summary": "Disable 2FA",
+        "description": "Disable 2FA with password and token verification",
+        "operationId": "disable2FA",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["password", "token"],
+                "properties": {
+                  "password": { "type": "string" },
+                  "token": { "type": "string", "pattern": "^[0-9]{6}$" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "2FA disabled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid password or token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/2fa/verify-login": {
+      "post": {
+        "tags": ["2FA"],
+        "summary": "Verify 2FA login",
+        "description": "Verify 2FA code during login flow",
+        "operationId": "verify2FALogin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["tempToken", "code"],
+                "properties": {
+                  "tempToken": { "type": "string", "description": "Temporary token from login response" },
+                  "code": { "type": "string", "pattern": "^[0-9]{6}$" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "2FA verification successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid 2FA code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/2fa/backup-codes/regenerate": {
+      "post": {
+        "tags": ["2FA"],
+        "summary": "Regenerate backup codes",
+        "description": "Generate new backup codes for 2FA",
+        "operationId": "regenerateBackupCodes",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Backup codes regenerated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "backupCodes": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions": {
+      "get": {
+        "tags": ["Sessions"],
+        "summary": "Get my sessions",
+        "description": "Get all active sessions for current user",
+        "operationId": "getMySessions",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Sessions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "sessions": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Session" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions/{sessionId}": {
+      "delete": {
+        "tags": ["Sessions"],
+        "summary": "Revoke session",
+        "description": "Revoke a specific session",
+        "operationId": "revokeSession",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session revoked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/stats": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Get dashboard stats",
+        "description": "Get dashboard statistics for current user",
+        "operationId": "getDashboardStats",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Dashboard stats retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/DashboardStats" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/chart": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Get chart data",
+        "description": "Get earnings chart data (last 7 days)",
+        "operationId": "getChartData",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Chart data retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": { "type": "string", "format": "date" },
+                          "amount": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wallets": {
+      "get": {
+        "tags": ["Wallets"],
+        "summary": "Get wallet balances",
+        "description": "Get all wallet balances for current user",
+        "operationId": "getWallets",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Wallet balances retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/WalletBalances" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wallets/transfer": {
+      "post": {
+        "tags": ["Wallets"],
+        "summary": "Transfer funds",
+        "description": "Transfer funds between wallets. Allowed: REWARD→DEPOSIT (re-invest), REWARD→WITHDRAWAL (cashout prep)",
+        "operationId": "transferFunds",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transfer successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid transfer path or insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wallets/admin/credit": {
+      "post": {
+        "tags": ["Wallets"],
+        "summary": "Admin credit",
+        "description": "Admin manual credit to user wallet",
+        "operationId": "adminCredit",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreditRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credit successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Admin role required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/investments/package": {
+      "post": {
+        "tags": ["Investments"],
+        "summary": "Create package",
+        "description": "Create a new MLM investment package. Deducts from Fiat wallet, credits Deposit wallet.",
+        "operationId": "createPackage",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "minimum": 100,
+                    "description": "Investment amount"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Package purchased successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/Investment" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Insufficient balance or rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/investments/fixed": {
+      "post": {
+        "tags": ["Investments"],
+        "summary": "Create fixed deposit",
+        "description": "Create a fixed-term staking deposit",
+        "operationId": "createFixedDeposit",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount", "durationMonths"],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "minimum": 100
+                  },
+                  "durationMonths": {
+                    "type": "integer",
+                    "enum": [3, 6, 12, 18, 24],
+                    "description": "Staking duration in months"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fixed deposit created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/Investment" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Insufficient balance or invalid duration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/investments/my": {
+      "get": {
+        "tags": ["Investments"],
+        "summary": "Get investment history",
+        "description": "Get investment history for current user",
+        "operationId": "getInvestmentHistory",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Investment history retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/InvestmentWithROI" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/referrals/tree": {
+      "get": {
+        "tags": ["Referrals"],
+        "summary": "Get referral tree",
+        "description": "Get referral tree (upline + direct downlines with stats)",
+        "operationId": "getReferralTree",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Referral tree fetched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/ReferralTree" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/my": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "Get transaction history",
+        "description": "Get transaction history with filters and pagination",
+        "operationId": "getTransactionHistory",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["ALL", "ROI", "COMMISSION", "ROYALTY", "RANK_BONUS", "REWARDS", "TRANSFER", "INVESTMENT", "WITHDRAWAL", "DEPOSIT"]
+            }
+          },
+          {
+            "name": "wallet",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["ALL", "FIAT", "DEPOSIT", "STAKING", "REWARD", "WITHDRAWAL"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction history retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "transactions": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Transaction" }
+                        },
+                        "pagination": { "$ref": "#/components/schemas/Pagination" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/earnings": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "Get earnings summary",
+        "description": "Get earnings summary breakdown by type",
+        "operationId": "getEarningsSummary",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Earnings summary retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/EarningsSummary" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/withdrawals/request": {
+      "post": {
+        "tags": ["Withdrawals"],
+        "summary": "Request withdrawal",
+        "description": "Request a withdrawal. Only available on Mondays (UTC).",
+        "operationId": "requestWithdrawal",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "minimum": 10
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Withdrawal requested successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/Transaction" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not Monday or insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/withdrawals/pending": {
+      "get": {
+        "tags": ["Withdrawals"],
+        "summary": "Get pending withdrawals (Admin)",
+        "description": "Get all pending withdrawal requests",
+        "operationId": "getPendingWithdrawals",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pending withdrawals retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "withdrawals": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/WithdrawalRequest" }
+                        },
+                        "pagination": { "$ref": "#/components/schemas/Pagination" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Admin role required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/withdrawals/{transactionId}/approve": {
+      "post": {
+        "tags": ["Withdrawals"],
+        "summary": "Approve withdrawal (Admin)",
+        "description": "Approve a pending withdrawal request",
+        "operationId": "approveWithdrawal",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "transactionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "feePercentage": {
+                    "type": "number",
+                    "description": "Override default fee percentage"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Withdrawal approved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "grossAmount": { "type": "string" },
+                        "feeAmount": { "type": "string" },
+                        "netAmount": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/withdrawals/{transactionId}/reject": {
+      "post": {
+        "tags": ["Withdrawals"],
+        "summary": "Reject withdrawal (Admin)",
+        "description": "Reject a pending withdrawal request",
+        "operationId": "rejectWithdrawal",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "transactionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "Rejection reason"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Withdrawal rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "refundedAmount": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get all users",
+        "description": "Get all users with pagination and filters",
+        "operationId": "getAllUsers",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["USER", "ADMIN", "MODERATOR"] }
+          },
+          {
+            "name": "verified",
+            "in": "query",
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Users retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "users": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/AdminUser" }
+                        },
+                        "pagination": { "$ref": "#/components/schemas/Pagination" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Admin role required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/{userId}": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get user by ID",
+        "description": "Get user details by ID",
+        "operationId": "getUserById",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": { "$ref": "#/components/schemas/AdminUserDetail" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Delete user",
+        "description": "Delete a user",
+        "operationId": "deleteUser",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot delete own account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/{userId}/role": {
+      "put": {
+        "tags": ["Admin"],
+        "summary": "Assign role",
+        "description": "Assign role to user",
+        "operationId": "assignRole",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["role"],
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": ["USER", "ADMIN", "MODERATOR"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Role updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": { "$ref": "#/components/schemas/User" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid role or cannot demote self",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/stats": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get system stats",
+        "description": "Get system statistics",
+        "operationId": "getSystemStats",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "stats": { "$ref": "#/components/schemas/SystemStats" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/roi/trigger": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Trigger ROI engine",
+        "description": "Manually trigger daily ROI calculation",
+        "operationId": "triggerRoi",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "ROI processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "processedCount": { "type": "integer" },
+                        "totalPayout": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/rank/trigger": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Trigger rank engine",
+        "description": "Manually trigger daily rank check",
+        "operationId": "triggerRank",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Rank engine executed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/royalty/trigger": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Trigger royalty engine",
+        "description": "Manually trigger monthly royalty distribution",
+        "operationId": "triggerRoyalty",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Royalty engine executed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/debug/chain-user/{address}": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get on-chain user info",
+        "description": "Debug: Fetch on-chain user info from smart contract",
+        "operationId": "getOnChainUser",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" },
+            "description": "Wallet address"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "On-chain user info retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/OnChainUser" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Blockchain service not connected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/plan": {
+      "get": {
+        "tags": ["Config"],
+        "summary": "Get plan config",
+        "description": "Get global plan configuration",
+        "operationId": "getPlanConfig",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Plan configuration retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/PlanConfig" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Config"],
+        "summary": "Update plan config",
+        "description": "Update global plan configuration",
+        "operationId": "updatePlanConfig",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanConfigUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan configuration updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/PlanConfig" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/ranks": {
+      "get": {
+        "tags": ["Config"],
+        "summary": "Get ranks",
+        "description": "Get all rank configurations",
+        "operationId": "getRanks",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Ranks retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/RankConfig" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Config"],
+        "summary": "Upsert rank",
+        "description": "Create or update a rank configuration",
+        "operationId": "upsertRank",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RankConfigRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rank configuration saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/RankConfig" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/ranks/{name}": {
+      "delete": {
+        "tags": ["Config"],
+        "summary": "Delete rank",
+        "description": "Delete a rank configuration",
+        "operationId": "deleteRank",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Rank name to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rank deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/reports/summary": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get platform summary",
+        "description": "Get platform summary statistics",
+        "operationId": "getReportsSummary",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Platform summary retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/PlatformSummary" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/reports/investments": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get investment report",
+        "description": "Get investment volume report",
+        "operationId": "getInvestmentReport",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["daily", "weekly", "monthly"], "default": "daily" }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "schema": { "type": "integer", "default": 30 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Investment report retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/InvestmentReport" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/reports/users": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get user growth report",
+        "description": "Get user growth report",
+        "operationId": "getUserGrowthReport",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "schema": { "type": "integer", "default": 30 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User growth report retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/UserGrowthReport" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/reports/commissions": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get commission report",
+        "description": "Get commission payout report",
+        "operationId": "getCommissionReport",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "schema": { "type": "integer", "default": 30 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Commission report retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/CommissionReport" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/reports/top-performers": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get top performers",
+        "description": "Get top performers leaderboard",
+        "operationId": "getTopPerformers",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Top performers retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/TopPerformers" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string" },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": { "type": "string" },
+                "message": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 8 },
+          "referralCode": { "type": "string", "pattern": "^[A-Z0-9]{8}$" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "is_verified": { "type": "boolean" },
+          "role": { "$ref": "#/components/schemas/UserRole" },
+          "two_factor_enabled": { "type": "boolean" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": { "$ref": "#/components/schemas/User" },
+              "token": { "type": "string" },
+              "refreshToken": { "type": "string" }
+            }
+          }
+        }
+      },
+      "TwoFactorRequiredResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "requiresTwoFactor": { "type": "boolean", "example": true },
+              "tempToken": { "type": "string" }
+            }
+          }
+        }
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "phone": { "type": "string" },
+          "avatarUrl": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "country": { "type": "string" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PublicProfile": {
+        "type": "object",
+        "properties": {
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "avatarUrl": { "type": "string" }
+        }
+      },
+      "ProfileUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "phone": { "type": "string" },
+          "avatarUrl": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "country": { "type": "string" }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "ipAddress": { "type": "string" },
+          "userAgent": { "type": "string" },
+          "lastActivityAt": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "device": {
+            "type": "object",
+            "properties": {
+              "browser": { "type": "string" },
+              "os": { "type": "string" },
+              "device": { "type": "string" }
+            }
+          }
+        }
+      },
+      "DashboardStats": {
+        "type": "object",
+        "properties": {
+          "rank": { "type": "string" },
+          "totalEarnings": { "type": "string" },
+          "teamBusiness": { "type": "string" },
+          "directBusiness": { "type": "string" },
+          "lastMonthBusiness": { "type": "string" },
+          "walletBalances": { "$ref": "#/components/schemas/WalletBalances" }
+        }
+      },
+      "WalletBalances": {
+        "type": "object",
+        "properties": {
+          "fiat": { "type": "string" },
+          "deposit": { "type": "string" },
+          "staking": { "type": "string" },
+          "reward": { "type": "string" },
+          "withdrawal": { "type": "string" }
+        }
+      },
+      "TransferRequest": {
+        "type": "object",
+        "required": ["fromWallet", "toWallet", "amount"],
+        "properties": {
+          "fromWallet": { "$ref": "#/components/schemas/WalletType" },
+          "toWallet": { "$ref": "#/components/schemas/WalletType" },
+          "amount": { "type": "number" }
+        }
+      },
+      "AdminCreditRequest": {
+        "type": "object",
+        "required": ["userId", "wallet", "amount"],
+        "properties": {
+          "userId": { "type": "string" },
+          "wallet": { "$ref": "#/components/schemas/WalletType" },
+          "amount": { "type": "number" }
+        }
+      },
+      "Investment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "amount": { "type": "string" },
+          "type": { "$ref": "#/components/schemas/InvestmentType" },
+          "status": { "$ref": "#/components/schemas/InvestmentStatus" },
+          "roiRate": { "type": "string" },
+          "durationDays": { "type": "integer" },
+          "startDate": { "type": "string", "format": "date-time" },
+          "lastRoiDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "InvestmentWithROI": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Investment" },
+          {
+            "type": "object",
+            "properties": {
+              "totalRoiPaid": { "type": "string" }
+            }
+          }
+        ]
+      },
+      "ReferralTree": {
+        "type": "object",
+        "properties": {
+          "myCode": { "type": "string" },
+          "myName": { "type": "string" },
+          "upline": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "email": { "type": "string" },
+              "name": { "type": "string" },
+              "rank": { "type": "string" },
+              "totalDownlines": { "type": "integer" }
+            }
+          },
+          "referrals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "email": { "type": "string" },
+                "name": { "type": "string" },
+                "rank": { "type": "string" },
+                "joinedAt": { "type": "string", "format": "date-time" },
+                "directCount": { "type": "integer" },
+                "teamCount": { "type": "integer" },
+                "totalTeamBusiness": { "type": "string" },
+                "lastMonthBusiness": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "amount": { "type": "string" },
+          "type": { "$ref": "#/components/schemas/TransactionType" },
+          "status": { "$ref": "#/components/schemas/TransactionStatus" },
+          "sourceWallet": { "$ref": "#/components/schemas/WalletType" },
+          "destWallet": { "$ref": "#/components/schemas/WalletType" },
+          "description": { "type": "string" },
+          "referenceId": { "type": "string" },
+          "referenceType": { "type": "string" },
+          "metadata": { "type": "object" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "EarningsSummary": {
+        "type": "object",
+        "properties": {
+          "breakdown": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "total": { "type": "string" },
+                "count": { "type": "integer" }
+              }
+            }
+          },
+          "totalEarnings": { "type": "string" }
+        }
+      },
+      "WithdrawalRequest": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "amount": { "type": "string" },
+          "status": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "user": {
+            "type": "object",
+            "properties": {
+              "email": { "type": "string" }
+            }
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "page": { "type": "integer" },
+          "limit": { "type": "integer" },
+          "totalPages": { "type": "integer" }
+        }
+      },
+      "AdminUser": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string" },
+          "role": { "$ref": "#/components/schemas/UserRole" },
+          "is_verified": { "type": "boolean" },
+          "two_factor_enabled": { "type": "boolean" },
+          "rank": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AdminUserDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/AdminUser" },
+          {
+            "type": "object",
+            "properties": {
+              "google_id": { "type": "string" },
+              "profile": { "$ref": "#/components/schemas/Profile" },
+              "rankHistory": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "rank": { "type": "string" },
+                    "achievedAt": { "type": "string", "format": "date-time" },
+                    "totalBusiness": { "type": "string" },
+                    "strongestLeg": { "type": "string" },
+                    "otherLegs": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "SystemStats": {
+        "type": "object",
+        "properties": {
+          "totalUsers": { "type": "integer" },
+          "verifiedUsers": { "type": "integer" },
+          "unverifiedUsers": { "type": "integer" },
+          "usersWithTwoFactor": { "type": "integer" },
+          "usersByRole": {
+            "type": "object",
+            "additionalProperties": { "type": "integer" }
+          },
+          "recentUsers": { "type": "integer" }
+        }
+      },
+      "OnChainUser": {
+        "type": "object",
+        "properties": {
+          "address": { "type": "string" },
+          "rankName": { "type": "string" },
+          "withdrawableBalance": { "type": "string" },
+          "isDormant": { "type": "boolean" },
+          "investments": { "type": "array", "items": { "type": "object" } },
+          "stakes": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "PlanConfig": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "key": { "type": "string" },
+          "levelIncomeRates": {
+            "type": "object",
+            "additionalProperties": { "type": "number" }
+          },
+          "withdrawalFeePercent": { "type": "string" },
+          "minWithdrawalAmount": { "type": "string" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PlanConfigUpdate": {
+        "type": "object",
+        "properties": {
+          "levelIncomeRates": {
+            "type": "object",
+            "additionalProperties": { "type": "number" }
+          },
+          "withdrawalFeePercent": { "type": "number" },
+          "minWithdrawalAmount": { "type": "number" }
+        }
+      },
+      "RankConfig": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "order": { "type": "integer" },
+          "requiredBusiness": { "type": "string" },
+          "bonusAmount": { "type": "string" },
+          "royaltyPercent": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RankConfigRequest": {
+        "type": "object",
+        "required": ["name", "order", "requiredBusiness", "bonusAmount", "royaltyPercent"],
+        "properties": {
+          "name": { "type": "string" },
+          "order": { "type": "integer" },
+          "requiredBusiness": { "type": "number" },
+          "bonusAmount": { "type": "number" },
+          "royaltyPercent": { "type": "number" }
+        }
+      },
+      "PlatformSummary": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "object",
+            "properties": {
+              "total": { "type": "integer" },
+              "verified": { "type": "integer" },
+              "unverified": { "type": "integer" }
+            }
+          },
+          "investments": {
+            "type": "object",
+            "properties": {
+              "totalVolume": { "type": "string" },
+              "totalCount": { "type": "integer" },
+              "activeCount": { "type": "integer" }
+            }
+          },
+          "withdrawals": {
+            "type": "object",
+            "properties": {
+              "totalVolume": { "type": "string" },
+              "totalCount": { "type": "integer" },
+              "pendingCount": { "type": "integer" }
+            }
+          },
+          "commissions": {
+            "type": "object",
+            "properties": {
+              "total": { "type": "string" }
+            }
+          },
+          "royalties": {
+            "type": "object",
+            "properties": {
+              "total": { "type": "string" }
+            }
+          },
+          "rankDistribution": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rank": { "type": "string" },
+                "count": { "type": "integer" }
+              }
+            }
+          }
+        }
+      },
+      "InvestmentReport": {
+        "type": "object",
+        "properties": {
+          "period": { "type": "string" },
+          "days": { "type": "integer" },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": { "type": "string" },
+                "volume": { "type": "string" }
+              }
+            }
+          },
+          "total": { "type": "string" }
+        }
+      },
+      "UserGrowthReport": {
+        "type": "object",
+        "properties": {
+          "days": { "type": "integer" },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": { "type": "string" },
+                "count": { "type": "integer" }
+              }
+            }
+          },
+          "totalNewUsers": { "type": "integer" }
+        }
+      },
+      "CommissionReport": {
+        "type": "object",
+        "properties": {
+          "days": { "type": "integer" },
+          "breakdown": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "total": { "type": "string" },
+                "count": { "type": "integer" }
+              }
+            }
+          },
+          "dailyRoiTrend": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": { "type": "string" },
+                "amount": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "TopPerformers": {
+        "type": "object",
+        "properties": {
+          "topEarners": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": { "type": "string" },
+                "email": { "type": "string" },
+                "name": { "type": "string" },
+                "rank": { "type": "string" },
+                "totalEarnings": { "type": "string" }
+              }
+            }
+          },
+          "topReferrers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": { "type": "string" },
+                "email": { "type": "string" },
+                "name": { "type": "string" },
+                "rank": { "type": "string" },
+                "referralCount": { "type": "integer" }
+              }
+            }
+          },
+          "topInvestors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": { "type": "string" },
+                "email": { "type": "string" },
+                "name": { "type": "string" },
+                "rank": { "type": "string" },
+                "totalInvested": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": ["USER", "ADMIN", "MODERATOR"]
+      },
+      "WalletType": {
+        "type": "string",
+        "enum": ["FIAT", "DEPOSIT", "STAKING", "REWARD", "WITHDRAWAL"]
+      },
+      "TransactionType": {
+        "type": "string",
+        "enum": ["DEPOSIT", "TRANSFER", "INVESTMENT", "ROI", "COMMISSION", "WITHDRAWAL", "ADMIN_ADJUST", "STAKING_RETURN", "ROYALTY", "RANK_BONUS"]
+      },
+      "TransactionStatus": {
+        "type": "string",
+        "enum": ["COMPLETED", "PENDING", "REJECTED", "FAILED"]
+      },
+      "InvestmentType": {
+        "type": "string",
+        "enum": ["PACKAGE", "FIXED"]
+      },
+      "InvestmentStatus": {
+        "type": "string",
+        "enum": ["ACTIVE", "COMPLETED", "CANCELLED"]
+      }
+    }
+  }
+}
+

@@ -31,4 +31,7 @@ router.post('/roi/trigger', adminController.triggerDailyRoi);
 router.post('/rank/trigger', adminController.triggerRankCheck);
 router.post('/royalty/trigger', adminController.triggerRoyalty);
 
+// Debug blockchain info
+router.get('/debug/chain-user/:address', adminController.getOnChainUser);
+
 export default router;

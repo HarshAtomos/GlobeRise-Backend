@@ -1,6 +1,7 @@
 import app from './app';
 import { config } from './config/env';
 import prisma from './config/database';
+import blockchainService from './services/blockchain.service';
 
 const startServer = async () => {
     try {
@@ -8,6 +9,17 @@ const startServer = async () => {
         await prisma.$connect();
         console.log('✅ Database connected successfully');
 
+        // Initialize blockchain service (if env vars present)
+        try {
+            await blockchainService.initialize();
+            if (blockchainService.isConnected()) {
+                console.log('⛓️  Blockchain service connected');
+            } else {
+                console.log('⚠️  Blockchain service running in mock mode (RPC or addresses missing)');
+            }
+        } catch (chainError) {
+            console.error('⚠️  Failed to initialize blockchain service:', chainError);
+        }
         // Start server
         app.listen(config.port, '0.0.0.0', () => {
             console.log(`🚀 Server running on port ${config.port}`);
