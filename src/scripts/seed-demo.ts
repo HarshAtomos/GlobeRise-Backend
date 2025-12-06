@@ -270,9 +270,7 @@ async function seedDemoData() {
         },
         wallets: {
           create: {
-            fiatBalance: 0,
             depositBalance: 0,
-            stakingBalance: 0,
             rewardBalance: 0,
             withdrawalBalance: 0
           }
@@ -297,32 +295,27 @@ async function seedDemoData() {
     investDate.setDate(investDate.getDate() - config.daysAgo);
 
     // Initial fiat credit (simulating deposit)
-    const initialFiat = config.investment + 1000; // Extra for fees
+    const initialDeposit = config.investment + 1000; // Extra for fees
     await prisma.userWallets.update({
       where: { userId: userData.id },
-      data: { fiatBalance: initialFiat }
+      data: { depositBalance: initialDeposit }
     });
 
     await prisma.walletTransaction.create({
       data: {
         userId: userData.id,
-        amount: initialFiat,
+        amount: initialDeposit,
         type: TransactionType.DEPOSIT,
-        destWallet: WalletType.FIAT,
+        destWallet: WalletType.DEPOSIT,
         description: 'Initial Deposit',
         status: 'COMPLETED',
         createdAt: investDate
       }
     });
 
-    // Create investment (Fiat -> Deposit)
-    await prisma.userWallets.update({
-      where: { userId: userData.id },
-      data: {
-        fiatBalance: { decrement: config.investment },
-        depositBalance: { increment: config.investment }
-      }
-    });
+    // Create investment
+    // Note: In the new system, investments are created from REWARD wallet and moved to DEPOSIT wallet
+    // For seeding, we'll simulate this by having the deposit balance already include the investment
 
     await prisma.investment.create({
       data: {
@@ -343,7 +336,7 @@ async function seedDemoData() {
         userId: userData.id,
         amount: config.investment,
         type: TransactionType.INVESTMENT,
-        sourceWallet: WalletType.FIAT,
+        sourceWallet: WalletType.DEPOSIT,
         destWallet: WalletType.DEPOSIT,
         description: 'Package Purchase',
         status: 'COMPLETED',
@@ -567,9 +560,9 @@ async function seedDemoData() {
 
     if (wallets) {
       console.log(`   ${config.email}:`);
-      console.log(`      Fiat: $${wallets.fiatBalance}`);
       console.log(`      Deposit: $${wallets.depositBalance}`);
       console.log(`      Reward: $${wallets.rewardBalance}`);
+      console.log(`      Withdrawal: $${wallets.withdrawalBalance}`);
     }
   }
 

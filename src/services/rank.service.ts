@@ -76,6 +76,35 @@ class RankService {
     }
 
     /**
+     * Check if 60-40 rule is valid for user's team business
+     * Rule: Stronger leg must be <= 60% of total business
+     * Returns: { isValid: boolean, strongerLegPercent: number, totalBusiness: Decimal, strongerLeg: Decimal }
+     */
+    async check6040Rule(userId: string): Promise<{ isValid: boolean; strongerLegPercent: number; totalBusiness: Decimal; strongerLeg: Decimal }> {
+        const stats = await this.calculateTeamStats(userId);
+        const { total, strong } = stats;
+
+        if (total.isZero()) {
+            return {
+                isValid: true, // No business means rule is technically valid
+                strongerLegPercent: 0,
+                totalBusiness: total,
+                strongerLeg: strong
+            };
+        }
+
+        const strongerLegPercent = Number(strong.div(total).mul(100));
+        const isValid = strongerLegPercent <= 60;
+
+        return {
+            isValid,
+            strongerLegPercent,
+            totalBusiness: total,
+            strongerLeg: strong
+        };
+    }
+
+    /**
      * Check and Process Rank Promotion
      */
     async processRankUpdate(userId: string): Promise<void> {

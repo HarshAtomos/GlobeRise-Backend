@@ -17,11 +17,18 @@ import configRoutes from './routes/config.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import transactionRoutes from './routes/transaction.routes';
 import reportsRoutes from './routes/reports.routes';
+import rateRoutes from './routes/rate.routes';
+import notificationRoutes from './routes/notification.routes';
+import announcementRoutes from './routes/announcement.routes';
+import walletLinkRoutes from './routes/wallet-link.routes';
+import ruleRoutes from './routes/rule.routes';
+import supportRoutes from './routes/support.routes';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { config } from './config/env';
 import roiService from './services/roi.service';
 import rankService from './services/rank.service';
 import royaltyService from './services/royalty.service';
+import rateService from './services/rate.service';
 
 const app: Application = express();
 
@@ -110,6 +117,24 @@ app.use('/api/transactions', transactionRoutes);
 // Reports routes (Admin)
 app.use('/api/admin/reports', reportsRoutes);
 
+// Rate routes
+app.use('/api/rates', rateRoutes);
+
+// Notification routes
+app.use('/api/notifications', notificationRoutes);
+
+// Announcement routes
+app.use('/api/announcements', announcementRoutes);
+
+// Wallet link routes
+app.use('/api/wallets/link', walletLinkRoutes);
+
+// Rule routes
+app.use('/api/rules', ruleRoutes);
+
+// Support routes
+app.use('/api/support', supportRoutes);
+
 // ==================== Scheduled Jobs ====================
 
 // 1. Run ROI Engine daily at 00:00 UTC
@@ -142,6 +167,17 @@ cron.schedule('0 2 1 * *', async () => {
         console.log('Royalty Engine Completed.');
     } catch (error) {
         console.error('Royalty Engine Failed:', error);
+    }
+});
+
+// 4. Update token rates every 5 minutes
+cron.schedule('*/5 * * * *', async () => {
+    console.log('Updating token rates...');
+    try {
+        await rateService.updateRates();
+        console.log('Token rates updated successfully.');
+    } catch (error) {
+        console.error('Failed to update token rates:', error);
     }
 });
 

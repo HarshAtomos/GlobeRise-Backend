@@ -22,6 +22,7 @@ class ProfileService {
             firstName?: string;
             lastName?: string;
             phone?: string;
+            phoneCountryCode?: string;
             avatarUrl?: string;
             address?: string;
             city?: string;
@@ -80,6 +81,32 @@ class ProfileService {
             city: profile.city || undefined,
             state: profile.state || undefined,
             country: profile.country || undefined,
+        };
+    }
+
+    // Get profile with email verification status
+    async getProfileWithEmailStatus(userId: string) {
+        const profile = await prisma.userProfile.findUnique({
+            where: { userId },
+            include: {
+                user: {
+                    select: {
+                        email: true,
+                        is_verified: true
+                    }
+                }
+            }
+        });
+
+        if (!profile) {
+            return null;
+        }
+
+        return {
+            ...this.formatProfileResponse(profile),
+            phoneCountryCode: profile.phoneCountryCode,
+            email: profile.user.email,
+            emailVerified: profile.user.is_verified
         };
     }
 

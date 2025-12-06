@@ -14,9 +14,7 @@ enum UserRole {
 }
 
 enum WalletType {
-  FIAT
   DEPOSIT
-  STAKING
   REWARD
   WITHDRAWAL
 }
@@ -91,6 +89,11 @@ model User {
   investments             Investment[]
   rankHistory             RankHistory[]
   businessSnapshots       BusinessSnapshot[]
+  
+  // New relations
+  notifications           Notification[]
+  linkedWallets           LinkedWallet[]
+  supportTickets          SupportTicket[]
 
   @@index([email])
   @@index([google_id])
@@ -143,12 +146,10 @@ model UserWallets {
   userId            String   @unique
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  // The 5 Wallets
-  fiatBalance       Decimal  @default(0.0)  @db.Decimal(20, 8)
-  depositBalance    Decimal  @default(0.0)  @db.Decimal(20, 8) // Locked active packages
-  stakingBalance    Decimal  @default(0.0)  @db.Decimal(20, 8) // Locked fixed term
-  rewardBalance     Decimal  @default(0.0)  @db.Decimal(20, 8) // Income pool
-  withdrawalBalance Decimal  @default(0.0)  @db.Decimal(20, 8) // Ready for exit
+  // The 3 Wallets
+  depositBalance    Decimal  @default(0.0)  @db.Decimal(20, 8) // User deposits from linked wallets
+  rewardBalance     Decimal  @default(0.0)  @db.Decimal(20, 8) // All ROI and income
+  withdrawalBalance Decimal  @default(0.0)  @db.Decimal(20, 8) // Ready for withdrawal to linked wallet
 
   updatedAt         DateTime @updatedAt
 }
@@ -205,20 +206,49 @@ model Investment {
 }
 
 model UserProfile {
-  id         String    @id @default(cuid())
-  userId     String    @unique
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  firstName  String?
-  lastName   String?
-  phone      String?
-  avatarUrl  String?
-  address    String?
-  city       String?
-  state      String?
-  zipCode    String?
-  country    String?
-  updatedAt  DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName       String?
+  lastName        String?
+  username        String?
+  phone           String?
+  phoneCountryCode String?  // e.g., "+1", "+44"
+  avatarUrl       String?
+  profilePhotoId  String?   @unique
+  profilePhoto    ProfilePhoto? @relation(fields: [profilePhotoId], references: [id])
+  address         String?
+  city            String?
+  state           String?
+  zipCode         String?
+  country         String?
+  updatedAt       DateTime  @updatedAt
 
+  @@index([userId])
+  @@index([username])
+}
+
+// Profile Photo with Admin Approval
+enum PhotoStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ProfilePhoto {
+  id          String        @id @default(cuid())
+  userId      String        @unique
+  userProfile UserProfile?
+  photoUrl    String
+  status      PhotoStatus   @default(PENDING)
+  adminNotes  String?       @db.Text
+  reviewedBy  String?       // Admin user ID
+  reviewedAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
   @@index([userId])
 }
 
@@ -315,4 +345,176 @@ model TwoFactorAuth {
   createdAt   DateTime @default(now())
 
   @@index([userId])
+}
+
+// Token Rates for Live Rates Display
+model TokenRate {
+  id          String   @id @default(cuid())
+  symbol      String   @unique // USDT, GRT, FLUFFY
+  price       Decimal  @db.Decimal(20, 8)
+  change24h   Decimal? @db.Decimal(10, 4) // Percentage change
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@index([symbol])
+}
+
+// Notifications System
+enum NotificationType {
+  ROI_CREDIT
+  COMMISSION
+  RANK_PROMOTION
+  WITHDRAWAL_APPROVED
+  WITHDRAWAL_REJECTED
+  INVESTMENT_CREATED
+  STAKING_MATURED
+  ROYALTY_DISTRIBUTED
+  SYSTEM
+  ANNOUNCEMENT
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  metadata  Json?            // Extra data (amount, referenceId, etc)
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+// Announcements System
+enum AnnouncementType {
+  OFFER
+  UPDATE
+  MAINTENANCE
+  GENERAL
+}
+
+model Announcement {
+  id          String            @id @default(cuid())
+  title       String
+  content     String            @db.Text
+  type        AnnouncementType
+  priority    Int               @default(0) // Higher = more important
+  active      Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  expiresAt   DateTime?
+  createdBy   String?           // Admin user ID
+
+  @@index([active])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+// Linked Wallets (MetaMask, Trust Wallet)
+enum WalletProvider {
+  METAMASK
+  TRUST_WALLET
+}
+
+model LinkedWallet {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address     String          // Wallet address
+  provider    WalletProvider
+  chainId     Int             // Network chain ID
+  isActive    Boolean         @default(true)
+  linkedAt    DateTime        @default(now())
+  lastSynced  DateTime?       // Last time balances were synced
+
+  @@unique([userId, address, chainId]) // One link per user-address-chain combo
+  @@index([userId])
+  @@index([address])
+  @@index([isActive])
+}
+
+// Support Tickets
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  ANSWERED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketCategory {
+  TECHNICAL
+  FINANCIAL
+  ACCOUNT
+  INVESTMENT
+  WITHDRAWAL
+  OTHER
+}
+
+model SupportTicket {
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      TicketCategory
+  subject       String
+  message       String          @db.Text
+  status        TicketStatus    @default(OPEN)
+  priority      TicketPriority  @default(MEDIUM)
+  adminResponse String?         @db.Text
+  respondedBy   String?         // Admin user ID
+  respondedAt   DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+}
+
+// FAQ
+model FAQ {
+  id          String          @id @default(cuid())
+  category    TicketCategory
+  question    String
+  answer      String          @db.Text
+  order       Int             @default(0)
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([category])
+  @@index([active])
+}
+
+// Rules
+enum RuleCategory {
+  INVESTMENT
+  REWARDS
+  WITHDRAWAL
+  RANKING
+  REFERRAL
+  GENERAL
+}
+
+model Rule {
+  id          String          @id @default(cuid())
+  category    RuleCategory
+  title       String
+  content     String          @db.Text
+  order       Int             @default(0)
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([category])
+  @@index([active])
 }
