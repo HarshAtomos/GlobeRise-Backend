@@ -13,6 +13,7 @@ router.get('/me', profileController.getMyProfile);
 // Update current user's profile
 router.put('/me', profileController.updateMyProfile);
 
+
 // Get another user's public profile
 router.get('/:userId', profileController.getUserProfile);
 

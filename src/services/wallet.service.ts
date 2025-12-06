@@ -4,9 +4,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 // Define balances type based on Prisma schema
 export interface WalletBalances {
-  fiat: Decimal;
   deposit: Decimal;
-  staking: Decimal;
   reward: Decimal;
   withdrawal: Decimal;
 }
@@ -37,18 +35,14 @@ class WalletService {
     if (!wallets) {
       // If no wallets found, return zeros (and lazily create them later or now)
       return {
-        fiat: new Decimal(0),
         deposit: new Decimal(0),
-        staking: new Decimal(0),
         reward: new Decimal(0),
         withdrawal: new Decimal(0),
       };
     }
 
     return {
-      fiat: wallets.fiatBalance,
       deposit: wallets.depositBalance,
-      staking: wallets.stakingBalance,
       reward: wallets.rewardBalance,
       withdrawal: wallets.withdrawalBalance,
     };
@@ -183,9 +177,7 @@ class WalletService {
   ): Promise<void> {
     // Map WalletType enum to actual column names
     const fieldMap: Record<WalletType, keyof Prisma.UserWalletsUpdateInput> = {
-      [WalletType.FIAT]: 'fiatBalance',
       [WalletType.DEPOSIT]: 'depositBalance',
-      [WalletType.STAKING]: 'stakingBalance',
       [WalletType.REWARD]: 'rewardBalance',
       [WalletType.WITHDRAWAL]: 'withdrawalBalance',
     };

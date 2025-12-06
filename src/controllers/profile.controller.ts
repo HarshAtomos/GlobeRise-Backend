@@ -10,7 +10,7 @@ class ProfileController {
                 return ResponseHandler.unauthorized(res);
             }
 
-            const profile = await profileService.getProfile(req.user.id);
+            const profile = await profileService.getProfileWithEmailStatus(req.user.id);
 
             if (!profile) {
                 return ResponseHandler.notFound(res, 'Profile not found');
@@ -29,12 +29,13 @@ class ProfileController {
                 return ResponseHandler.unauthorized(res);
             }
 
-            const { firstName, lastName, phone, avatarUrl, address, city, state, zipCode, country } = req.body;
+            const { firstName, lastName, phone, phoneCountryCode, avatarUrl, address, city, state, zipCode, country } = req.body;
 
             const profile = await profileService.updateProfile(req.user.id, {
                 firstName,
                 lastName,
                 phone,
+                phoneCountryCode,
                 avatarUrl,
                 address,
                 city,
@@ -65,6 +66,7 @@ class ProfileController {
             next(error);
         }
     }
+
 }
 
 export default new ProfileController();

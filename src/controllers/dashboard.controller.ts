@@ -82,13 +82,26 @@ class DashboardController {
         select: { rank: true }
       });
 
+      // Check 60-40 rule validity
+      const rule6040 = await rankService.check6040Rule(userId);
+
       return ResponseHandler.success(res, 'Dashboard stats retrieved', {
         rank: user?.rank || 'NONE',
         totalEarnings,
         teamBusiness: teamStats.total,
         directBusiness,
         lastMonthBusiness,
-        walletBalances: wallets
+        walletBalances: {
+          deposit: wallets.deposit,
+          reward: wallets.reward,
+          withdrawal: wallets.withdrawal
+        },
+        rule6040: {
+          isValid: rule6040.isValid,
+          strongerLegPercent: rule6040.strongerLegPercent,
+          strongerLeg: rule6040.strongerLeg,
+          totalBusiness: rule6040.totalBusiness
+        }
       });
 
     } catch (err) {
@@ -135,10 +148,143 @@ class DashboardController {
       const data = dates.map(date => {
         const dayTx = transactions.filter(t => t.createdAt.toISOString().startsWith(date));
         const amount = dayTx.reduce((sum, t) => sum.add(t.amount), new Decimal(0));
-        return { date, amount };
+        return { date, amount: Number(amount) };
       });
 
       return ResponseHandler.success(res, 'Chart data retrieved', data);
+
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Get User Earnings Report (with date range)
+   */
+  async getEarningsReport(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) return ResponseHandler.unauthorized(res);
+      const userId = req.user.id;
+
+      const days = parseInt(req.query.days as string) || 30;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      startDate.setHours(0, 0, 0, 0);
+
+      const transactions = await prisma.walletTransaction.findMany({
+        where: {
+          userId,
+          destWallet: WalletType.REWARD,
+          createdAt: { gte: startDate },
+          type: { in: [TransactionType.ROI, TransactionType.COMMISSION, TransactionType.ROYALTY, TransactionType.RANK_BONUS] }
+        },
+        select: {
+          amount: true,
+          createdAt: true,
+          type: true
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      // Group by type
+      const breakdown: Record<string, { total: Decimal; count: number }> = {};
+      for (const tx of transactions) {
+        const type = tx.type;
+        if (!breakdown[type]) {
+          breakdown[type] = { total: new Decimal(0), count: 0 };
+        }
+        breakdown[type].total = breakdown[type].total.add(tx.amount);
+        breakdown[type].count += 1;
+      }
+
+      // Daily aggregation for chart
+      const dailyData: Record<string, Decimal> = {};
+      for (const tx of transactions) {
+        const date = tx.createdAt.toISOString().split('T')[0];
+        if (!dailyData[date]) {
+          dailyData[date] = new Decimal(0);
+        }
+        dailyData[date] = dailyData[date].add(tx.amount);
+      }
+
+      const chartData = Object.entries(dailyData).map(([date, amount]) => ({
+        date,
+        amount: Number(amount)
+      })).sort((a, b) => a.date.localeCompare(b.date));
+
+      return ResponseHandler.success(res, 'Earnings report retrieved', {
+        breakdown: Object.fromEntries(
+          Object.entries(breakdown).map(([k, v]) => [k, { total: Number(v.total), count: v.count }])
+        ),
+        chartData,
+        total: Number(transactions.reduce((sum, t) => sum.add(t.amount), new Decimal(0)))
+      });
+
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Get User Investment Report
+   */
+  async getInvestmentReport(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) return ResponseHandler.unauthorized(res);
+      const userId = req.user.id;
+
+      const days = parseInt(req.query.days as string) || 30;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      startDate.setHours(0, 0, 0, 0);
+
+      const investments = await prisma.investment.findMany({
+        where: {
+          userId,
+          createdAt: { gte: startDate }
+        },
+        select: {
+          amount: true,
+          type: true,
+          status: true,
+          createdAt: true
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      // Group by type
+      const byType: Record<string, { total: Decimal; count: number }> = {};
+      for (const inv of investments) {
+        const type = inv.type;
+        if (!byType[type]) {
+          byType[type] = { total: new Decimal(0), count: 0 };
+        }
+        byType[type].total = byType[type].total.add(inv.amount);
+        byType[type].count += 1;
+      }
+
+      // Daily aggregation
+      const dailyData: Record<string, Decimal> = {};
+      for (const inv of investments) {
+        const date = inv.createdAt.toISOString().split('T')[0];
+        if (!dailyData[date]) {
+          dailyData[date] = new Decimal(0);
+        }
+        dailyData[date] = dailyData[date].add(inv.amount);
+      }
+
+      const chartData = Object.entries(dailyData).map(([date, amount]) => ({
+        date,
+        amount: Number(amount)
+      })).sort((a, b) => a.date.localeCompare(b.date));
+
+      return ResponseHandler.success(res, 'Investment report retrieved', {
+        byType: Object.fromEntries(
+          Object.entries(byType).map(([k, v]) => [k, { total: Number(v.total), count: v.count }])
+        ),
+        chartData,
+        total: Number(investments.reduce((sum, i) => sum.add(i.amount), new Decimal(0)))
+      });
 
     } catch (err) {
       next(err);

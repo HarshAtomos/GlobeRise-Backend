@@ -7,68 +7,40 @@ import commissionService from './commission.service';
 class InvestmentService {
   /**
    * Create a new active package (MLM Investment)
-   * Flows: Fiat Wallet -> Deposit Wallet (Locked)
+   * Flows: Deposit Wallet -> Deposit Wallet (Locked) - User deposits from linked wallet first
+   * Minimum: 100 GRT tokens
    */
   async createPackage(userId: string, amount: number | Decimal): Promise<any> {
     const investAmount = new Decimal(amount);
+    const MIN_AMOUNT = new Decimal(100); // Minimum 100 GRT tokens
+    
     if (investAmount.lte(0)) throw new Error('Investment amount must be positive');
-
-    // 1. Validation: Progressive Rule
-    // "Once a user invested X amount he can never invest less than X amount"
-    // We check the user's MAX previous active package.
-    const maxInvestment = await prisma.investment.findFirst({
-      where: { 
-        userId, 
-        type: InvestmentType.PACKAGE,
-        status: { in: [InvestmentStatus.ACTIVE, InvestmentStatus.COMPLETED] } 
-      },
-      orderBy: { amount: 'desc' },
-    });
-
-    if (maxInvestment && investAmount.lt(maxInvestment.amount)) {
-      throw new Error(`New investment must be at least ${maxInvestment.amount} (Progressive Rule)`);
+    if (investAmount.lt(MIN_AMOUNT)) {
+      throw new Error(`Minimum investment amount is ${MIN_AMOUNT} GRT tokens`);
     }
 
-    // 2. Validation: Downline Rule (Referral Validation)
-    // "Referred account should pay equal or more than the parent"
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (user?.referredById) {
-      const referrerMaxPackage = await prisma.investment.findFirst({
-        where: { 
-          userId: user.referredById,
-          type: InvestmentType.PACKAGE,
-          status: InvestmentStatus.ACTIVE
-        },
-        orderBy: { amount: 'desc' },
-      });
+    // 1. Validation: Direct Referral Counting Logic
+    // Next referral must invest MORE than referrer's package amount to count for cap increase
+    // This is handled in the referral/cap logic, not here in package creation
+    // Package creation just needs to validate minimum amount
 
-      if (referrerMaxPackage && investAmount.lt(referrerMaxPackage.amount)) {
-        throw new Error(`Investment must be at least ${referrerMaxPackage.amount} to match your sponsor's level.`);
-      }
-    }
-
-    // 3. Execute Investment (Atomic)
+    // 2. Execute Investment (Atomic)
     const investment = await prisma.$transaction(async (tx) => {
-      // 3.1 Check Balance & Debit Fiat
+      // 2.1 Check Balance & Debit Deposit Wallet
       const wallets = await tx.userWallets.findUniqueOrThrow({ where: { userId } });
-      if (wallets.fiatBalance.lt(investAmount)) {
-        throw new Error('Insufficient balance in Fiat Wallet');
+      if (wallets.depositBalance.lt(investAmount)) {
+        throw new Error('Insufficient balance in Deposit Wallet. Please deposit from your linked wallet first.');
       }
-      await tx.userWallets.update({
-        where: { userId },
-        data: { 
-          fiatBalance: { decrement: investAmount },
-          depositBalance: { increment: investAmount } // Locked in Deposit Wallet
-        }
-      });
+      // Amount stays in Deposit Wallet (locked for package)
+      // No transfer needed - it's already in Deposit Wallet
 
-      // 3.2 Create Wallet Transaction Record (Investment)
+      // 2.2 Create Wallet Transaction Record (Investment)
       await tx.walletTransaction.create({
         data: {
           userId,
           amount: investAmount,
           type: TransactionType.INVESTMENT,
-          sourceWallet: WalletType.FIAT,
+          sourceWallet: WalletType.DEPOSIT,
           destWallet: WalletType.DEPOSIT,
           description: 'Package Purchase',
         }
@@ -107,26 +79,21 @@ class InvestmentService {
   }
 
   /**
-   * Create a fixed term deposit (Staking Wallet)
+   * Create a fixed term deposit (Staking)
+   * Flows: Deposit Wallet -> Deposit Wallet (Locked for staking)
    */
   async createFixedDeposit(userId: string, amount: number | Decimal, durationMonths: number): Promise<any> {
     const investAmount = new Decimal(amount);
     if (investAmount.lte(0)) throw new Error('Amount must be positive');
 
     return await prisma.$transaction(async (tx) => {
-      // 1. Debit Fiat -> Credit Staking
+      // 1. Check Balance in Deposit Wallet
       const wallets = await tx.userWallets.findUniqueOrThrow({ where: { userId } });
-      if (wallets.fiatBalance.lt(investAmount)) {
-        throw new Error('Insufficient balance in Fiat Wallet');
+      if (wallets.depositBalance.lt(investAmount)) {
+        throw new Error('Insufficient balance in Deposit Wallet. Please deposit from your linked wallet first.');
       }
-
-      await tx.userWallets.update({
-        where: { userId },
-        data: { 
-          fiatBalance: { decrement: investAmount },
-          stakingBalance: { increment: investAmount }
-        }
-      });
+      // Amount stays in Deposit Wallet (locked for staking)
+      // No transfer needed - it's already in Deposit Wallet
 
       // 2. Record Tx
       await tx.walletTransaction.create({
@@ -134,8 +101,8 @@ class InvestmentService {
           userId,
           amount: investAmount,
           type: TransactionType.INVESTMENT,
-          sourceWallet: WalletType.FIAT,
-          destWallet: WalletType.STAKING,
+          sourceWallet: WalletType.DEPOSIT,
+          destWallet: WalletType.DEPOSIT,
           description: `Fixed Deposit (${durationMonths} months)`,
         }
       });
