@@ -137,11 +137,11 @@ app.use('/api/support', supportRoutes);
 
 // ==================== Scheduled Jobs ====================
 
-// 1. Run ROI Engine daily at 00:00 UTC
-cron.schedule('0 0 * * *', async () => {
-    console.log('Running Daily ROI Engine...');
+// 1. Run ROI Engine monthly (1st day of month at 00:00 UTC)
+cron.schedule('0 0 1 * *', async () => {
+    console.log('Running Monthly ROI Engine...');
     try {
-        const result = await roiService.processDailyRoi();
+        const result = await roiService.processMonthlyRoi();
         console.log(`ROI Engine Completed. Processed: ${result.processed}, Total Payout: ${result.totalAmount}`);
     } catch (error) {
         console.error('ROI Engine Failed:', error);

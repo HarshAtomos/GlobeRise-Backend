@@ -1,15 +1,19 @@
 /**
  * Demo Seed Script
- * Creates 10 realistic demo users with proper referral chains, investments,
- * and transactions following all business rules.
+ * Creates 13 demo accounts with proper referral chains, investments,
+ * and 2-3 months of transaction history following all business rules.
  * 
  * Business Rules Enforced:
- * - Downline Rule: Must invest >= sponsor's amount
- * - Progressive Rule: Can't invest less than previous investment
- * - 60:40 Rule: Strongest leg max 60% for rank qualification
- * - ROI Tiers: 8% base, 10% with 2 directs in 14 days, 12% with 4 directs in 21 days
+ * - 60:40 Rule: Strongest leg must be ≤60% of total team business for rank qualification
+ * - ROI: 8% monthly (paid after each 30-day cycle)
  * - Direct Bonus: 5% of investment to sponsor
  * - Level Income: Based on downline ROI
+ * 
+ * Hierarchy:
+ * - Leader 1 (KING): User 1 + User 2
+ * - Leader 2 (CROWN_PRINCE): User 3 + User 4
+ * - Leader 3 (COMMANDER): User 5 + User 6
+ * - Leader 4 (NAVIGATOR): User 7 + User 8
  * 
  * Usage: npx ts-node src/scripts/seed-demo.ts
  */
@@ -20,8 +24,6 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { TransactionType, WalletType, InvestmentType, InvestmentStatus, UserRole } from '@prisma/client';
 
 const SALT_ROUNDS = 10;
-const DEFAULT_PASSWORD = 'Demo@123';
-const INVESTMENT_AMOUNT = 5000; // All users invest $5,000
 
 // Level income rates (from seed-config)
 const LEVEL_RATES: Record<number, number> = {
@@ -30,21 +32,39 @@ const LEVEL_RATES: Record<number, number> = {
   11: 2, 12: 1, 13: 1, 14: 1, 15: 1, 16: 1
 };
 
-// User structure as per plan
+// Rank thresholds (must match seed-config)
+const RANK_THRESHOLDS = [
+  { name: 'IMPERATOR', required: 10000000 },
+  { name: 'SUPREME_LEADER', required: 8500000 },
+  { name: 'EMPEROR', required: 7000000 },
+  { name: 'KING', required: 5500000 },
+  { name: 'CROWN_PRINCE', required: 4000000 },
+  { name: 'LEGEND', required: 2500000 },
+  { name: 'GRANDMASTER', required: 1500000 },
+  { name: 'TRAILBLAZER', required: 1000000 },
+  { name: 'STRATEGIST', required: 500000 },
+  { name: 'COMMANDER', required: 350000 },
+  { name: 'CHAMPION', required: 200000 },
+  { name: 'NAVIGATOR', required: 100000 },
+  { name: 'CHALLENGER', required: 40000 },
+  { name: 'PATHFINDER', required: 15000 },
+  { name: 'EXPLORER', required: 5000 },
+];
+
+// User configuration
 interface DemoUser {
   email: string;
   password: string;
   role: UserRole;
   firstName: string;
   lastName: string;
-  sponsorEmail: string | null; // null = ROOT
+  sponsorEmail: string | null;
   investment: number;
-  roiRate: number; // Determined by direct referrals
   daysAgo: number; // When they joined/invested
 }
 
 const DEMO_USERS: DemoUser[] = [
-  // Admin - separate from MLM
+  // ===================== ADMIN =====================
   {
     email: 'admin@globerise.eu',
     password: 'Admin@123',
@@ -53,116 +73,149 @@ const DEMO_USERS: DemoUser[] = [
     lastName: 'Admin',
     sponsorEmail: null,
     investment: 0,
-    roiRate: 0,
-    daysAgo: 60
+    daysAgo: 120
   },
-  // Whale - ROOT of MLM tree
+
+  // ===================== LEADERS =====================
+  // Leader 1 - Target: KING (needs $5.5M team business)
   {
-    email: 'whale@globerise.eu',
-    password: 'Whale@123',
-    role: UserRole.USER,
-    firstName: 'Michael',
-    lastName: 'Chen',
-    sponsorEmail: null, // ROOT
-    investment: INVESTMENT_AMOUNT,
-    roiRate: 12, // Has 5 directs within 21 days
-    daysAgo: 45
-  },
-  // Leader - Whale's direct #1
-  {
-    email: 'leader@globerise.eu',
+    email: 'alexander@globerise.eu',
     password: 'Leader@123',
     role: UserRole.USER,
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    sponsorEmail: 'whale@globerise.eu',
-    investment: INVESTMENT_AMOUNT,
-    roiRate: 10, // Has 2 directs within 14 days
-    daysAgo: 40
+    firstName: 'Alexander',
+    lastName: 'Stone',
+    sponsorEmail: null,
+    investment: 100000,
+    daysAgo: 100
   },
-  // Team1 - Whale's direct #2
+  // Leader 2 - Target: CROWN_PRINCE (needs $4M team business)
   {
-    email: 'team1@globerise.eu',
-    password: DEFAULT_PASSWORD,
+    email: 'victoria@globerise.eu',
+    password: 'Leader@123',
     role: UserRole.USER,
-    firstName: 'Alex',
-    lastName: 'Rivera',
-    sponsorEmail: 'whale@globerise.eu',
-    investment: INVESTMENT_AMOUNT,
-    roiRate: 8,
-    daysAgo: 38
+    firstName: 'Victoria',
+    lastName: 'Crown',
+    sponsorEmail: null,
+    investment: 75000,
+    daysAgo: 95
   },
-  // Team2 - Whale's direct #3
+  // Leader 3 - Target: COMMANDER (needs $350K team business)
   {
-    email: 'team2@globerise.eu',
-    password: DEFAULT_PASSWORD,
+    email: 'marcus@globerise.eu',
+    password: 'Leader@123',
     role: UserRole.USER,
-    firstName: 'Jordan',
-    lastName: 'Lee',
-    sponsorEmail: 'whale@globerise.eu',
-    investment: INVESTMENT_AMOUNT,
-    roiRate: 8,
-    daysAgo: 35
+    firstName: 'Marcus',
+    lastName: 'Reed',
+    sponsorEmail: null,
+    investment: 50000,
+    daysAgo: 90
   },
-  // Team3 - Whale's direct #4
+  // Leader 4 - Target: NAVIGATOR (needs $100K team business)
   {
-    email: 'team3@globerise.eu',
-    password: DEFAULT_PASSWORD,
+    email: 'elena@globerise.eu',
+    password: 'Leader@123',
     role: UserRole.USER,
-    firstName: 'Taylor',
-    lastName: 'Martinez',
-    sponsorEmail: 'whale@globerise.eu',
-    investment: INVESTMENT_AMOUNT,
-    roiRate: 8,
-    daysAgo: 32
+    firstName: 'Elena',
+    lastName: 'Torres',
+    sponsorEmail: null,
+    investment: 25000,
+    daysAgo: 85
   },
-  // Team4 - Whale's direct #5
+
+  // ===================== USERS UNDER LEADER 1 =====================
+  // User 1 - $2.75M (Leg 1 for Leader 1)
   {
-    email: 'team4@globerise.eu',
-    password: DEFAULT_PASSWORD,
+    email: 'james.miller@demo.globerise.eu',
+    password: 'User@123',
     role: UserRole.USER,
-    firstName: 'Casey',
-    lastName: 'Brown',
-    sponsorEmail: 'whale@globerise.eu',
-    investment: INVESTMENT_AMOUNT,
-    roiRate: 8,
-    daysAgo: 30
+    firstName: 'James',
+    lastName: 'Miller',
+    sponsorEmail: 'alexander@globerise.eu',
+    investment: 2750000,
+    daysAgo: 80
   },
-  // Starter - Leader's direct #1
+  // User 2 - $2.75M (Leg 2 for Leader 1)
   {
-    email: 'starter@globerise.eu',
-    password: 'Starter@123',
+    email: 'sophia.chen@demo.globerise.eu',
+    password: 'User@123',
     role: UserRole.USER,
-    firstName: 'David',
-    lastName: 'Kim',
-    sponsorEmail: 'leader@globerise.eu',
-    investment: INVESTMENT_AMOUNT,
-    roiRate: 8,
-    daysAgo: 35
+    firstName: 'Sophia',
+    lastName: 'Chen',
+    sponsorEmail: 'alexander@globerise.eu',
+    investment: 2750000,
+    daysAgo: 78
   },
-  // Member1 - Leader's direct #2
+
+  // ===================== USERS UNDER LEADER 2 =====================
+  // User 3 - $2M (Leg 1 for Leader 2)
   {
-    email: 'member1@globerise.eu',
-    password: DEFAULT_PASSWORD,
+    email: 'daniel.kumar@demo.globerise.eu',
+    password: 'User@123',
     role: UserRole.USER,
-    firstName: 'Morgan',
-    lastName: 'Davis',
-    sponsorEmail: 'leader@globerise.eu',
-    investment: INVESTMENT_AMOUNT,
-    roiRate: 8,
-    daysAgo: 33
+    firstName: 'Daniel',
+    lastName: 'Kumar',
+    sponsorEmail: 'victoria@globerise.eu',
+    investment: 2000000,
+    daysAgo: 75
   },
-  // Newbie - Starter's direct #1
+  // User 4 - $2M (Leg 2 for Leader 2)
   {
-    email: 'newbie@globerise.eu',
-    password: 'Newbie@123',
+    email: 'olivia.santos@demo.globerise.eu',
+    password: 'User@123',
+    role: UserRole.USER,
+    firstName: 'Olivia',
+    lastName: 'Santos',
+    sponsorEmail: 'victoria@globerise.eu',
+    investment: 2000000,
+    daysAgo: 73
+  },
+
+  // ===================== USERS UNDER LEADER 3 =====================
+  // User 5 - $175K (Leg 1 for Leader 3)
+  {
+    email: 'ethan.wright@demo.globerise.eu',
+    password: 'User@123',
+    role: UserRole.USER,
+    firstName: 'Ethan',
+    lastName: 'Wright',
+    sponsorEmail: 'marcus@globerise.eu',
+    investment: 175000,
+    daysAgo: 70
+  },
+  // User 6 - $175K (Leg 2 for Leader 3)
+  {
+    email: 'emma.johnson@demo.globerise.eu',
+    password: 'User@123',
     role: UserRole.USER,
     firstName: 'Emma',
-    lastName: 'Wilson',
-    sponsorEmail: 'starter@globerise.eu',
-    investment: INVESTMENT_AMOUNT,
-    roiRate: 8,
-    daysAgo: 25
+    lastName: 'Johnson',
+    sponsorEmail: 'marcus@globerise.eu',
+    investment: 175000,
+    daysAgo: 68
+  },
+
+  // ===================== USERS UNDER LEADER 4 =====================
+  // User 7 - $50K (Leg 1 for Leader 4)
+  {
+    email: 'noah.patel@demo.globerise.eu',
+    password: 'User@123',
+    role: UserRole.USER,
+    firstName: 'Noah',
+    lastName: 'Patel',
+    sponsorEmail: 'elena@globerise.eu',
+    investment: 50000,
+    daysAgo: 65
+  },
+  // User 8 - $50K (Leg 2 for Leader 4)
+  {
+    email: 'ava.williams@demo.globerise.eu',
+    password: 'User@123',
+    role: UserRole.USER,
+    firstName: 'Ava',
+    lastName: 'Williams',
+    sponsorEmail: 'elena@globerise.eu',
+    investment: 50000,
+    daysAgo: 63
   }
 ];
 
@@ -172,71 +225,92 @@ function generateReferralCode(): string {
   return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
-// Calculate rank based on team business with 60:40 rule
+/**
+ * Calculate rank based on team business with STRICT 60:40 rule
+ * Eligible only if strongest leg ≤ 60% of total team business
+ */
 function calculateRank(totalBusiness: number, strongestLeg: number): string {
-  // 60:40 Rule: Strongest leg can contribute max 60%
-  const maxFromStrong = totalBusiness * 0.6;
-  const effectiveStrong = Math.min(strongestLeg, maxFromStrong);
-  const effectiveBusiness = effectiveStrong + (totalBusiness - strongestLeg);
+  // 60:40 Rule Check: Strongest leg must be ≤60% of total
+  if (totalBusiness > 0) {
+    const strongPercent = (strongestLeg / totalBusiness) * 100;
+    if (strongPercent > 60) {
+      return 'NONE'; // Disqualified - violates 60:40 rule
+    }
+  }
 
-  // Rank thresholds (from seed-config)
-  if (effectiveBusiness >= 10000000) return 'IMPERATOR';
-  if (effectiveBusiness >= 8500000) return 'SUPREME_LEADER';
-  if (effectiveBusiness >= 7000000) return 'EMPEROR';
-  if (effectiveBusiness >= 5500000) return 'KING';
-  if (effectiveBusiness >= 4000000) return 'CROWN_PRINCE';
-  if (effectiveBusiness >= 2500000) return 'LEGEND';
-  if (effectiveBusiness >= 1500000) return 'GRANDMASTER';
-  if (effectiveBusiness >= 1000000) return 'TRAILBLAZER';
-  if (effectiveBusiness >= 500000) return 'STRATEGIST';
-  if (effectiveBusiness >= 350000) return 'COMMANDER';
-  if (effectiveBusiness >= 200000) return 'CHAMPION';
-  if (effectiveBusiness >= 100000) return 'NAVIGATOR';
-  if (effectiveBusiness >= 40000) return 'CHALLENGER';
-  if (effectiveBusiness >= 15000) return 'PATHFINDER';
-  if (effectiveBusiness >= 5000) return 'EXPLORER';
+  // Find highest qualifying rank
+  for (const rank of RANK_THRESHOLDS) {
+    if (totalBusiness >= rank.required) {
+      return rank.name;
+    }
+  }
+
   return 'NONE';
 }
 
 async function seedDemoData() {
-  console.log('='.repeat(60));
-  console.log('GLOBERISE DEMO SEED');
-  console.log('='.repeat(60));
+  console.log('='.repeat(70));
+  console.log('GLOBERISE DEMO SEED - 13 Accounts with 60:40 Rule');
+  console.log('='.repeat(70));
+
+  // ==================== CLEANUP ====================
   console.log('\n1. Cleaning up ALL existing data...');
 
-  // Delete ALL data in correct order (respecting foreign keys)
+  console.log('   Deleting notifications...');
+  await prisma.notification.deleteMany({});
+
+  console.log('   Deleting support tickets...');
+  await prisma.supportTicket.deleteMany({});
+
+  console.log('   Deleting linked wallets...');
+  await prisma.linkedWallet.deleteMany({});
+
   console.log('   Deleting transactions...');
   await prisma.walletTransaction.deleteMany({});
-  
+
   console.log('   Deleting investments...');
   await prisma.investment.deleteMany({});
-  
+
   console.log('   Deleting rank history...');
   await prisma.rankHistory.deleteMany({});
-  
+
   console.log('   Deleting business snapshots...');
   await prisma.businessSnapshot.deleteMany({});
-  
+
   console.log('   Deleting wallets...');
   await prisma.userWallets.deleteMany({});
-  
+
+  console.log('   Deleting 2FA...');
+  await prisma.twoFactorAuth.deleteMany({});
+
+  console.log('   Deleting sessions...');
+  await prisma.userSession.deleteMany({});
+
+  console.log('   Deleting refresh tokens...');
+  await prisma.refreshToken.deleteMany({});
+
+  console.log('   Deleting password resets...');
+  await prisma.passwordReset.deleteMany({});
+
+  console.log('   Deleting profile photos...');
+  await prisma.profilePhoto.deleteMany({});
+
   console.log('   Deleting user profiles...');
   await prisma.userProfile.deleteMany({});
-  
+
   console.log('   Deleting users...');
   await prisma.user.deleteMany({});
-  
+
   console.log('   ✅ All existing data cleaned!');
 
-  // Store created users for reference
+  // ==================== CREATE USERS ====================
   const createdUsers: Map<string, { id: string; referralCode: string }> = new Map();
 
-  console.log('\n2. Creating users...');
+  console.log('\n2. Creating 13 demo users...');
 
-  // Create users in order (sponsors first)
   for (const config of DEMO_USERS) {
     const passwordHash = await bcrypt.hash(config.password, SALT_ROUNDS);
-    const referralCode = generateReferralCode();
+    const referralCode = config.role !== UserRole.ADMIN ? generateReferralCode() : null;
 
     // Find sponsor ID
     let referredById: string | null = null;
@@ -258,8 +332,8 @@ async function seedDemoData() {
         password_hash: passwordHash,
         is_verified: true,
         role: config.role,
-        rank: 'NONE', // Will be updated after calculating team business
-        referralCode: config.role !== UserRole.ADMIN ? referralCode : null,
+        rank: 'NONE',
+        referralCode,
         referredById,
         created_at: joinDate,
         profile: {
@@ -278,13 +352,16 @@ async function seedDemoData() {
       }
     });
 
-    createdUsers.set(config.email, { id: user.id, referralCode });
-    console.log(`   Created: ${config.email} (${config.role})`);
+    createdUsers.set(config.email, { id: user.id, referralCode: referralCode || '' });
+
+    const roleTag = config.role === UserRole.ADMIN ? '[ADMIN]' : '[USER]';
+    const sponsorTag = config.sponsorEmail ? `← ${config.sponsorEmail.split('@')[0]}` : '(ROOT)';
+    console.log(`   ${roleTag} ${config.email} ${sponsorTag}`);
   }
 
-  console.log('\n3. Processing investments and transactions...');
+  // ==================== CREATE INVESTMENTS ====================
+  console.log('\n3. Processing investments and direct bonuses...');
 
-  // Process investments for each user
   for (const config of DEMO_USERS) {
     if (config.investment <= 0) continue;
 
@@ -294,43 +371,42 @@ async function seedDemoData() {
     const investDate = new Date();
     investDate.setDate(investDate.getDate() - config.daysAgo);
 
-    // Initial fiat credit (simulating deposit)
-    const initialDeposit = config.investment + 1000; // Extra for fees
+    // Fund deposit wallet
+    const initialDeposit = config.investment;
     await prisma.userWallets.update({
       where: { userId: userData.id },
       data: { depositBalance: initialDeposit }
     });
 
+    // Record deposit transaction
     await prisma.walletTransaction.create({
       data: {
         userId: userData.id,
         amount: initialDeposit,
         type: TransactionType.DEPOSIT,
         destWallet: WalletType.DEPOSIT,
-        description: 'Initial Deposit',
+        description: 'Initial Deposit from Linked Wallet',
         status: 'COMPLETED',
         createdAt: investDate
       }
     });
 
     // Create investment
-    // Note: In the new system, investments are created from REWARD wallet and moved to DEPOSIT wallet
-    // For seeding, we'll simulate this by having the deposit balance already include the investment
-
-    await prisma.investment.create({
+    const investment = await prisma.investment.create({
       data: {
         userId: userData.id,
         amount: config.investment,
         type: InvestmentType.PACKAGE,
         status: InvestmentStatus.ACTIVE,
-        roiRate: config.roiRate,
+        roiRate: 8.0, // Base 8% monthly
         durationDays: 365,
         startDate: investDate,
-        lastRoiDate: new Date(),
+        lastRoiDate: investDate, // Will be updated as ROI is paid
         createdAt: investDate
       }
     });
 
+    // Record investment transaction
     await prisma.walletTransaction.create({
       data: {
         userId: userData.id,
@@ -340,18 +416,20 @@ async function seedDemoData() {
         destWallet: WalletType.DEPOSIT,
         description: 'Package Purchase',
         status: 'COMPLETED',
+        referenceId: investment.id,
+        referenceType: 'INVESTMENT',
         createdAt: investDate
       }
     });
 
-    console.log(`   ${config.email}: Invested $${config.investment}`);
+    console.log(`   ${config.email}: Invested $${config.investment.toLocaleString()}`);
 
     // Direct Referral Bonus (5% to sponsor)
     if (config.sponsorEmail) {
       const sponsor = createdUsers.get(config.sponsorEmail);
       if (sponsor) {
         const bonus = new Decimal(config.investment).mul(0.05);
-        
+
         await prisma.userWallets.update({
           where: { userId: sponsor.id },
           data: { rewardBalance: { increment: bonus } }
@@ -363,119 +441,138 @@ async function seedDemoData() {
             amount: bonus,
             type: TransactionType.COMMISSION,
             destWallet: WalletType.REWARD,
-            description: `Direct Referral Bonus from ${config.email}`,
+            description: `Direct Referral Bonus from ${config.firstName} ${config.lastName}`,
             status: 'COMPLETED',
             referenceId: userData.id,
             referenceType: 'USER',
-            metadata: { type: 'DIRECT_BONUS', fromUser: config.email },
+            metadata: { type: 'DIRECT_BONUS', fromUser: config.email, percentage: 5 },
             createdAt: investDate
           }
         });
 
-        console.log(`   -> Sponsor ${config.sponsorEmail} received $${bonus} direct bonus`);
+        const sponsorConfig = DEMO_USERS.find(u => u.email === config.sponsorEmail);
+        console.log(`      → ${sponsorConfig?.firstName} received $${bonus.toFixed(2)} direct bonus`);
       }
     }
   }
 
-  console.log('\n4. Generating ROI history (30 days)...');
+  // ==================== GENERATE ROI HISTORY (2-3 Months) ====================
+  console.log('\n4. Generating 2-3 months of ROI history...');
 
-  // Generate ROI for each user with investment
   for (const config of DEMO_USERS) {
-    if (config.investment <= 0 || config.roiRate <= 0) continue;
+    if (config.investment <= 0) continue;
 
     const userData = createdUsers.get(config.email);
     if (!userData) continue;
 
-    const dailyRoi = new Decimal(config.investment).mul(config.roiRate).div(100).div(30);
-    const daysOfRoi = Math.min(config.daysAgo, 30);
+    // Get the investment
+    const investment = await prisma.investment.findFirst({
+      where: { userId: userData.id, type: InvestmentType.PACKAGE }
+    });
+    if (!investment) continue;
+
+    // Calculate how many complete 30-day cycles have passed
+    const completedMonths = Math.floor(config.daysAgo / 30);
+    const monthsToProcess = Math.min(completedMonths, 3); // Max 3 months
+
+    if (monthsToProcess === 0) {
+      console.log(`   ${config.email}: ${config.daysAgo} days old - no ROI yet (< 30 days)`);
+      continue;
+    }
+
     let totalRoi = new Decimal(0);
+    const monthlyRoi = new Decimal(config.investment).mul(0.08); // 8% monthly
 
-    for (let day = daysOfRoi; day >= 1; day--) {
+    for (let month = 1; month <= monthsToProcess; month++) {
       const roiDate = new Date();
-      roiDate.setDate(roiDate.getDate() - day);
-      roiDate.setHours(0, 0, 0, 0);
+      roiDate.setDate(roiDate.getDate() - config.daysAgo + (month * 30));
 
-      // Add some variance
-      const variance = dailyRoi.mul(new Decimal(Math.random() * 0.2 - 0.1));
-      const dayAmount = dailyRoi.plus(variance).toDecimalPlaces(2);
+      // Credit ROI to user
+      await prisma.userWallets.update({
+        where: { userId: userData.id },
+        data: { rewardBalance: { increment: monthlyRoi } }
+      });
 
-      if (dayAmount.gt(0)) {
-        totalRoi = totalRoi.plus(dayAmount);
+      await prisma.walletTransaction.create({
+        data: {
+          userId: userData.id,
+          amount: monthlyRoi,
+          type: TransactionType.ROI,
+          destWallet: WalletType.REWARD,
+          description: `Monthly ROI (8%) - Month ${month}`,
+          status: 'COMPLETED',
+          referenceId: investment.id,
+          referenceType: 'INVESTMENT',
+          metadata: { roiRate: 8, month, type: 'MONTHLY_ROI' },
+          createdAt: roiDate
+        }
+      });
 
-        await prisma.walletTransaction.create({
-          data: {
-            userId: userData.id,
-            amount: dayAmount,
-            type: TransactionType.ROI,
-            destWallet: WalletType.REWARD,
-            description: `Daily ROI (${config.roiRate}%)`,
-            status: 'COMPLETED',
-            metadata: { roiRate: config.roiRate, day: daysOfRoi - day + 1 },
-            createdAt: roiDate
-          }
+      totalRoi = totalRoi.plus(monthlyRoi);
+
+      // Distribute Level Income to uplines
+      let currentSponsorEmail = config.sponsorEmail;
+      let level = 1;
+
+      while (currentSponsorEmail && level <= 16) {
+        const sponsorData = createdUsers.get(currentSponsorEmail);
+        if (!sponsorData) break;
+
+        // Check if sponsor has enough direct referrals for this level
+        const sponsorDirectCount = await prisma.user.count({
+          where: { referredById: sponsorData.id }
         });
 
-        // Level Income to upline (up to 16 levels)
-        let currentSponsorEmail = config.sponsorEmail;
-        let level = 1;
+        if (sponsorDirectCount >= level) {
+          const levelRate = LEVEL_RATES[level] || 1;
+          const levelIncome = monthlyRoi.mul(levelRate).div(100).toDecimalPlaces(2);
 
-        while (currentSponsorEmail && level <= 16) {
-          const sponsorData = createdUsers.get(currentSponsorEmail);
-          if (!sponsorData) break;
+          if (levelIncome.gt(0)) {
+            await prisma.userWallets.update({
+              where: { userId: sponsorData.id },
+              data: { rewardBalance: { increment: levelIncome } }
+            });
 
-          // Check if sponsor has enough direct referrals for this level
-          const sponsorDirectCount = await prisma.user.count({
-            where: { referredById: sponsorData.id }
-          });
-
-          if (sponsorDirectCount >= level) {
-            const levelRate = LEVEL_RATES[level] || 1;
-            const levelIncome = dayAmount.mul(levelRate).div(100).toDecimalPlaces(2);
-
-            if (levelIncome.gt(0)) {
-              await prisma.userWallets.update({
-                where: { userId: sponsorData.id },
-                data: { rewardBalance: { increment: levelIncome } }
-              });
-
-              await prisma.walletTransaction.create({
-                data: {
-                  userId: sponsorData.id,
-                  amount: levelIncome,
-                  type: TransactionType.COMMISSION,
-                  destWallet: WalletType.REWARD,
-                  description: `Level ${level} Income from ${config.email}`,
-                  status: 'COMPLETED',
-                  metadata: { type: 'LEVEL_INCOME', level, fromUser: config.email, rate: levelRate },
-                  createdAt: roiDate
-                }
-              });
-            }
+            await prisma.walletTransaction.create({
+              data: {
+                userId: sponsorData.id,
+                amount: levelIncome,
+                type: TransactionType.COMMISSION,
+                destWallet: WalletType.REWARD,
+                description: `Level ${level} Income from ${config.firstName} ${config.lastName} - Month ${month}`,
+                status: 'COMPLETED',
+                referenceId: userData.id,
+                referenceType: 'USER',
+                metadata: { type: 'LEVEL_INCOME', level, fromUser: config.email, rate: levelRate, month },
+                createdAt: roiDate
+              }
+            });
           }
-
-          // Move to next upline
-          const sponsorUser = DEMO_USERS.find(u => u.email === currentSponsorEmail);
-          currentSponsorEmail = sponsorUser?.sponsorEmail || null;
-          level++;
         }
+
+        // Move to next upline
+        const sponsorUser = DEMO_USERS.find(u => u.email === currentSponsorEmail);
+        currentSponsorEmail = sponsorUser?.sponsorEmail || null;
+        level++;
       }
     }
 
-    // Credit ROI to reward wallet
-    await prisma.userWallets.update({
-      where: { userId: userData.id },
-      data: { rewardBalance: { increment: totalRoi } }
+    // Update last ROI date on investment
+    const lastRoiDate = new Date();
+    lastRoiDate.setDate(lastRoiDate.getDate() - config.daysAgo + (monthsToProcess * 30));
+    await prisma.investment.update({
+      where: { id: investment.id },
+      data: { lastRoiDate }
     });
 
-    console.log(`   ${config.email}: ${daysOfRoi} days of ROI at ${config.roiRate}% = $${totalRoi.toFixed(2)}`);
+    console.log(`   ${config.email}: ${monthsToProcess} month(s) of ROI = $${totalRoi.toFixed(2)}`);
   }
 
-  console.log('\n5. Calculating ranks based on team business...');
+  // ==================== CALCULATE RANKS ====================
+  console.log('\n5. Calculating ranks with 60:40 rule...');
 
-  // Calculate team business and assign ranks
+  // Calculate team business bottom-up
   const teamBusinessMap: Map<string, { total: number; strong: number; others: number }> = new Map();
-
-  // Calculate from bottom up
   const orderedUsers = [...DEMO_USERS].reverse();
 
   for (const config of orderedUsers) {
@@ -492,6 +589,7 @@ async function seedDemoData() {
 
     let totalTeamBusiness = 0;
     let strongestLeg = 0;
+    const legVolumes: number[] = [];
 
     for (const direct of directs) {
       // Get direct's own investment
@@ -510,6 +608,7 @@ async function seedDemoData() {
       const directTeamBusiness = teamBusinessMap.get(direct.email)?.total || 0;
 
       const legVolume = directOwnInvestment + directTeamBusiness;
+      legVolumes.push(legVolume);
       totalTeamBusiness += legVolume;
 
       if (legVolume > strongestLeg) {
@@ -520,7 +619,7 @@ async function seedDemoData() {
     const others = totalTeamBusiness - strongestLeg;
     teamBusinessMap.set(config.email, { total: totalTeamBusiness, strong: strongestLeg, others });
 
-    // Calculate rank
+    // Calculate rank with 60:40 rule
     const rank = calculateRank(totalTeamBusiness, strongestLeg);
 
     // Update user rank
@@ -544,12 +643,19 @@ async function seedDemoData() {
     }
 
     const strongPercent = totalTeamBusiness > 0 ? ((strongestLeg / totalTeamBusiness) * 100).toFixed(0) : 0;
-    console.log(`   ${config.email}: Team=$${totalTeamBusiness}, Strong=$${strongestLeg} (${strongPercent}%), Rank=${rank}`);
+    const rule6040 = totalTeamBusiness > 0 && (strongestLeg / totalTeamBusiness) <= 0.6 ? '✅' : '❌';
+
+    if (directs.length > 0) {
+      console.log(`   ${config.email}:`);
+      console.log(`      Team: $${totalTeamBusiness.toLocaleString()} | Strong: $${strongestLeg.toLocaleString()} (${strongPercent}%) ${rule6040}`);
+      console.log(`      Legs: [${legVolumes.map(v => '$' + v.toLocaleString()).join(', ')}]`);
+      console.log(`      Rank: ${rank}`);
+    }
   }
 
+  // ==================== FINAL SUMMARY ====================
   console.log('\n6. Final wallet balance summary...');
 
-  // Print final balances
   for (const config of DEMO_USERS) {
     const userData = createdUsers.get(config.email);
     if (!userData) continue;
@@ -558,39 +664,75 @@ async function seedDemoData() {
       where: { userId: userData.id }
     });
 
+    const user = await prisma.user.findUnique({
+      where: { id: userData.id },
+      select: { rank: true }
+    });
+
     if (wallets) {
-      console.log(`   ${config.email}:`);
-      console.log(`      Deposit: $${wallets.depositBalance}`);
-      console.log(`      Reward: $${wallets.rewardBalance}`);
-      console.log(`      Withdrawal: $${wallets.withdrawalBalance}`);
+      const deposit = Number(wallets.depositBalance).toLocaleString();
+      const reward = Number(wallets.rewardBalance).toLocaleString();
+      const withdrawal = Number(wallets.withdrawalBalance).toLocaleString();
+      console.log(`   ${config.email} [${user?.rank || 'NONE'}]`);
+      console.log(`      Deposit: $${deposit} | Reward: $${reward} | Withdrawal: $${withdrawal}`);
     }
   }
 
-  // Print summary
-  console.log('\n' + '='.repeat(60));
+  // ==================== PRINT CREDENTIALS ====================
+  console.log('\n' + '='.repeat(70));
   console.log('DEMO SEED COMPLETED');
-  console.log('='.repeat(60));
-  console.log('\nDemo Credentials:');
-  console.log('-'.repeat(40));
+  console.log('='.repeat(70));
 
-  for (const config of DEMO_USERS) {
-    const icon = config.role === UserRole.ADMIN ? '[ADMIN]' : '[USER]';
-    console.log(`${icon} ${config.email}`);
-    console.log(`       Password: ${config.password}`);
+  console.log('\n📋 Demo Credentials:');
+  console.log('-'.repeat(50));
+
+  // Admin
+  console.log('\n[ADMIN]');
+  console.log(`   Email:    admin@globerise.eu`);
+  console.log(`   Password: Admin@123`);
+
+  // Leaders
+  console.log('\n[LEADERS]');
+  const leaders = DEMO_USERS.filter(u => u.role === UserRole.USER && !u.sponsorEmail);
+  for (const leader of leaders) {
+    const user = await prisma.user.findUnique({
+      where: { email: leader.email },
+      select: { rank: true }
+    });
+    console.log(`   ${leader.email} (${user?.rank})`);
+    console.log(`   Password: ${leader.password}`);
+    console.log('');
   }
 
-  console.log('-'.repeat(40));
-  console.log('\nReferral Structure:');
-  console.log('  Whale (ROOT)');
-  console.log('  +-- Leader');
-  console.log('  |   +-- Starter');
-  console.log('  |   |   +-- Newbie');
-  console.log('  |   +-- Member1');
-  console.log('  +-- Team1');
-  console.log('  +-- Team2');
-  console.log('  +-- Team3');
-  console.log('  +-- Team4');
-  console.log('='.repeat(60));
+  // Users
+  console.log('[USERS]');
+  const users = DEMO_USERS.filter(u => u.role === UserRole.USER && u.sponsorEmail);
+  for (const user of users) {
+    const sponsor = DEMO_USERS.find(u2 => u2.email === user.sponsorEmail);
+    console.log(`   ${user.email} → ${sponsor?.firstName || 'Unknown'}`);
+  }
+  console.log(`   Password: User@123 (all users)`);
+
+  console.log('\n' + '-'.repeat(50));
+  console.log('\n🌳 Referral Tree:');
+  console.log('');
+  console.log('  Alexander (KING)');
+  console.log('  ├── James Miller ($2.75M)');
+  console.log('  └── Sophia Chen ($2.75M)');
+  console.log('');
+  console.log('  Victoria (CROWN_PRINCE)');
+  console.log('  ├── Daniel Kumar ($2M)');
+  console.log('  └── Olivia Santos ($2M)');
+  console.log('');
+  console.log('  Marcus (COMMANDER)');
+  console.log('  ├── Ethan Wright ($175K)');
+  console.log('  └── Emma Johnson ($175K)');
+  console.log('');
+  console.log('  Elena (NAVIGATOR)');
+  console.log('  ├── Noah Patel ($50K)');
+  console.log('  └── Ava Williams ($50K)');
+
+  console.log('\n' + '='.repeat(70));
 }
 
 // Run
