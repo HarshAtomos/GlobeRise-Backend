@@ -17,7 +17,7 @@ class TransactionController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const type = req.query.type as string; // ROI, COMMISSION, ROYALTY, RANK_BONUS, ALL
-      const wallet = req.query.wallet as string; // FIAT, DEPOSIT, STAKING, REWARD, WITHDRAWAL
+      const wallet = req.query.wallet as string; // DEPOSIT, STAKING, REWARD, WITHDRAWAL
 
       // Build where clause
       const where: any = { userId };

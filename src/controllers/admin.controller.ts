@@ -221,10 +221,10 @@ class AdminController {
     }
 
     // Manually trigger Daily ROI calculation (Admin only)
-    async triggerDailyRoi(req: Request, res: Response, next: NextFunction) {
+    async triggerMonthlyRoi(req: Request, res: Response, next: NextFunction) {
         try {
             console.log('Admin triggered Daily ROI Engine...');
-            const result = await roiService.processDailyRoi();
+            const result = await roiService.processMonthlyRoi();
 
             return ResponseHandler.success(res, 'Daily ROI processed successfully', {
                 processedCount: result.processed,

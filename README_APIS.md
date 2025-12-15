@@ -36,7 +36,7 @@
 
 GlobeRise is a DeFi and MLM platform backend built on Node.js/Express with PostgreSQL. The system implements:
 
-- **4-Wallet Architecture**: Fiat, Deposit, Staking, Reward, Withdrawal wallets
+- **3-Wallet Architecture**: Deposit, Staking, Reward, Withdrawal wallets
 - **MLM Income System**: ROI, Direct Bonus, Level Income, Rank Bonus, Royalty
 - **Blockchain Integration**: Sepolia testnet smart contracts
 
@@ -979,7 +979,7 @@ Admin manual credit to user wallet.
 | Field | Type | Required | Values |
 |-------|------|----------|--------|
 | userId | string | Yes | Target user ID |
-| wallet | string | Yes | FIAT, DEPOSIT, STAKING, REWARD, WITHDRAWAL |
+| wallet | string | Yes | DEPOSIT, STAKING, REWARD, WITHDRAWAL |
 | amount | number | Yes | Amount to credit |
 
 **Success Response (200):**
@@ -1232,7 +1232,7 @@ Get transaction history with filters and pagination.
 
 **Wallet Filter Values:**
 
-- `ALL`, `FIAT`, `DEPOSIT`, `STAKING`, `REWARD`, `WITHDRAWAL`
+- `ALL`, `DEPOSIT`, `STAKING`, `REWARD`, `WITHDRAWAL`
 
 **Success Response (200):**
 
@@ -1675,7 +1675,7 @@ Get system statistics.
 
 #### `POST /api/admin/roi/trigger`
 
-Manually trigger daily ROI calculation.
+Manually trigger monthly ROI calculation.
 
 **Authentication:** JWT Required + Admin Role
 
@@ -2168,7 +2168,6 @@ enum UserRole {
 
 ```typescript
 enum WalletType {
-  FIAT = 'FIAT',           // Entry point for deposits
   DEPOSIT = 'DEPOSIT',     // Active MLM investments
   STAKING = 'STAKING',     // Fixed-term deposits
   REWARD = 'REWARD',       // All earnings
@@ -2253,7 +2252,7 @@ The system runs automated jobs via `node-cron`:
 
 | Job | Schedule | Description |
 |-----|----------|-------------|
-| ROI Engine | Daily 00:00 UTC | Calculate and distribute daily ROI |
+| ROI Engine | Monthly 1st 00:00 UTC | Calculate and distribute monthly ROI |
 | Rank Engine | Daily 01:00 UTC | Check and update user ranks |
 | Royalty Engine | Monthly 1st 02:00 UTC | Distribute monthly royalty to qualified users |
 

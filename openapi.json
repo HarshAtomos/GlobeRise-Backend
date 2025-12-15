@@ -1325,7 +1325,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["ALL", "FIAT", "DEPOSIT", "STAKING", "REWARD", "WITHDRAWAL"]
+              "enum": ["ALL", "DEPOSIT", "STAKING", "REWARD", "WITHDRAWAL"]
             }
           }
         ],
@@ -2887,7 +2887,7 @@
       },
       "WalletType": {
         "type": "string",
-        "enum": ["FIAT", "DEPOSIT", "STAKING", "REWARD", "WITHDRAWAL"]
+        "enum": ["DEPOSIT", "STAKING", "REWARD", "WITHDRAWAL"]
       },
       "TransactionType": {
         "type": "string",

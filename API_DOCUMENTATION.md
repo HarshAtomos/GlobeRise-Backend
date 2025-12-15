@@ -1210,7 +1210,7 @@ Authorization: Bearer <access_token>
 **Query Parameters:**
 
 - `type` (optional): Filter by type - `ROI`, `COMMISSION`, `ROYALTY`, `RANK_BONUS`, `REWARDS` (all reward types), `TRANSFER`, `INVESTMENT`, `WITHDRAWAL`, `DEPOSIT`, `ALL`
-- `wallet` (optional): Filter by wallet - `FIAT`, `DEPOSIT`, `STAKING`, `REWARD`, `WITHDRAWAL`, `ALL`
+- `wallet` (optional): Filter by wallet - `DEPOSIT`, `STAKING`, `REWARD`, `WITHDRAWAL`, `ALL`
 - `page` (default: 1)
 - `limit` (default: 20)
 

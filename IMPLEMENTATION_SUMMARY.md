@@ -12,7 +12,7 @@
   - **Dormant Check:** Referrer must be active (activity within 90 days).
   - **Enhanced Tree:** Returns Upline info + Downline Rank/Volume/Name stats.
 
-### 2. Financial Core (4-Wallet Architecture)
+### 2. Financial Core (3-Wallet Architecture)
 - **Database Schema:** `UserWallets`, `WalletTransaction`, `Investment`.
 - **Wallet Service:** ACID transactions for transfers/credits/debits.
 - **Investment Service:** Package/Fixed creation with Progressive & Downline validations.
@@ -23,7 +23,7 @@
 
 ### 4. Income Engines
 - **Direct Referral Bonus:** 5% instant commission.
-- **ROI Engine:** Daily 8-12% calculation + Level Income trigger.
+- **ROI Engine:** Monthly 8-12% calculation + Level Income trigger.
 - **Level Income:** 16 Levels (configurable), enforces "N directs for Level N" rule.
 - **Rank Engine:** Daily 60:40 Rule check for promotions + One-time Bonus.
 - **Royalty Engine:** Monthly "Growth Rule" check + Pool Distribution.
@@ -132,7 +132,7 @@ npx ts-node src/scripts/seed-demo.ts      # Seed demo users
 1. Login as admin@globerise.com
 2. `GET /api/admin/reports/summary` → View platform stats
 3. `POST /api/wallets/admin/credit` → Fund user wallet
-4. `POST /api/admin/roi/trigger` → Process daily ROI
+4. `POST /api/admin/roi/trigger` → Process monthly ROI
 5. `POST /api/admin/rank/trigger` → Check rank promotions
 
 ### 4. User Flow
@@ -222,7 +222,7 @@ TOKEN_ADDRESS=0x...
 ## ✅ Demo Readiness Checklist
 
 - [x] User authentication (login, register, 2FA)
-- [x] 4-Wallet system with transfers
+- [x] 3-Wallet system with transfers
 - [x] Investment packages with validation rules
 - [x] ROI, Commission, Royalty engines
 - [x] Rank system with 60:40 rule

@@ -27,7 +27,7 @@ router.put('/users/:userId/role', adminController.assignRole);
 router.delete('/users/:userId', adminController.deleteUser);
 
 // Manual Triggers
-router.post('/roi/trigger', adminController.triggerDailyRoi);
+router.post('/roi/trigger', adminController.triggerMonthlyRoi);
 router.post('/rank/trigger', adminController.triggerRankCheck);
 router.post('/royalty/trigger', adminController.triggerRoyalty);
 
