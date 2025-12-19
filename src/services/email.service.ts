@@ -2,28 +2,42 @@ import nodemailer from 'nodemailer';
 import { config } from '../config/env';
 
 class EmailService {
-    private transporter;
+  private transporter: nodemailer.Transporter;
 
-    constructor() {
-        this.transporter = nodemailer.createTransport({
-            host: config.email.host,
-            port: config.email.port,
-            secure: false, // true for 465, false for other ports
-            auth: {
-                user: config.email.user,
-                pass: config.email.pass,
-            },
-        });
-    }
+  constructor() {
+    this.transporter = nodemailer.createTransport({
+      host: config.email.host,          // smtp.gmail.com
+      port: config.email.port,          // 587
+      secure: false,                    // MUST be false for 587
+      auth: {
+        user: config.email.user,        // no-reply@globerise.eu
+        pass: config.email.pass,        // App Password
+      },
+      requireTLS: true,                 // 🔒 Force STARTTLS
+      tls: {
+        rejectUnauthorized: true,       // 🔒 Prevent MITM
+      },
+    });
 
-    async sendVerificationEmail(email: string, token: string): Promise<void> {
-        const verificationUrl = `${config.frontendUrl}/verify-email?token=${token}`;
+    // ✅ Verify SMTP connection at startup
+    this.transporter.verify((error, success) => {
+      if (error) {
+        console.error('❌ SMTP connection failed:', error);
+      } else {
+        console.log('✅ SMTP server is ready to send emails');
+      }
+    });
+  }
 
-        const mailOptions = {
-            from: config.email.from,
-            to: email,
-            subject: 'Verify Your Email Address',
-            html: `
+  async sendVerificationEmail(email: string, token: string): Promise<void> {
+    const verificationUrl = `${config.frontendUrl}/verify-email?token=${token}`;
+
+    await this.transporter.sendMail({
+      from: config.email.from,               // no-reply@globerise.eu
+      replyTo: 'support@globerise.eu',        // Optional but recommended
+      to: email,
+      subject: 'Verify Your Email Address',
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Welcome! Please verify your email</h2>
           <p>Click the button below to verify your email address:</p>
@@ -39,19 +53,18 @@ class EmailService {
           </p>
         </div>
       `,
-        };
+    });
+  }
 
-        await this.transporter.sendMail(mailOptions);
-    }
+  async sendPasswordResetEmail(email: string, token: string): Promise<void> {
+    const resetUrl = `${config.frontendUrl}/reset-password?token=${token}`;
 
-    async sendPasswordResetEmail(email: string, token: string): Promise<void> {
-        const resetUrl = `${config.frontendUrl}/reset-password?token=${token}`;
-
-        const mailOptions = {
-            from: config.email.from,
-            to: email,
-            subject: 'Reset Your Password',
-            html: `
+    await this.transporter.sendMail({
+      from: config.email.from,
+      replyTo: 'support@globerise.eu',
+      to: email,
+      subject: 'Reset Your Password',
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Password Reset Request</h2>
           <p>Click the button below to reset your password:</p>
@@ -67,10 +80,8 @@ class EmailService {
           </p>
         </div>
       `,
-        };
-
-        await this.transporter.sendMail(mailOptions);
-    }
+    });
+  }
 }
 
 export default new EmailService();
