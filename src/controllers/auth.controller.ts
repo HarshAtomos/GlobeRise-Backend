@@ -11,7 +11,6 @@ class AuthController {
     async register(req: Request, res: Response, next: NextFunction) {
         try {
             const { email, password, referralCode } = req.body;
-
             const result = await authService.registerWithEmail(email, password, referralCode, req);
 
             return ResponseHandler.success(
@@ -207,6 +206,27 @@ class AuthController {
             await passwordResetService.resetPassword(token, password);
 
             return ResponseHandler.success(res, 'Password has been reset successfully. Please login with your new password.');
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Change password (requires authentication and current password)
+    async changePassword(req: Request, res: Response, next: NextFunction) {
+        try {
+            if (!req.user) {
+                return ResponseHandler.unauthorized(res);
+            }
+
+            const { currentPassword, newPassword } = req.body;
+
+            if (!currentPassword || !newPassword) {
+                return ResponseHandler.badRequest(res, 'Current password and new password are required');
+            }
+
+            await authService.changePassword(req.user.id, currentPassword, newPassword);
+
+            return ResponseHandler.success(res, 'Password changed successfully. Please login again with your new password.');
         } catch (error) {
             next(error);
         }

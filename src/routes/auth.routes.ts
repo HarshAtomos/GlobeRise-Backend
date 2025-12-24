@@ -113,4 +113,11 @@ router.post(
   authController.logoutAll
 );
 
+// Change password (requires authentication)
+router.post(
+  '/change-password',
+  authenticateJWT,
+  authController.changePassword
+);
+
 export default router;

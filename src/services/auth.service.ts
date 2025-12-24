@@ -335,6 +335,44 @@ class AuthService {
       refreshToken,
     };
   }
+
+  // Change password (requires current password)
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    // Get user
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.password_hash) {
+      throw new Error('User not found');
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await this.comparePassword(currentPassword, user.password_hash);
+    if (!isCurrentPasswordValid) {
+      throw new Error('Current password is incorrect');
+    }
+
+    // Check if new password is different
+    const isSamePassword = await this.comparePassword(newPassword, user.password_hash);
+    if (isSamePassword) {
+      throw new Error('New password must be different from current password');
+    }
+
+    // Hash new password
+    const newPasswordHash = await this.hashPassword(newPassword);
+
+    // Update password
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password_hash: newPasswordHash,
+      },
+    });
+
+    // Revoke all refresh tokens for security (force re-login)
+    await prisma.refreshToken.updateMany({
+      where: { userId, isRevoked: false },
+      data: { isRevoked: true },
+    });
+  }
 }
 
 export default new AuthService();

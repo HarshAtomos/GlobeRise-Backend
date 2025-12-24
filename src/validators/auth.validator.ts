@@ -33,7 +33,7 @@ const passwordValidator = body('password')
 export const registerValidator = [
     body('email')
         .isEmail()
-        .normalizeEmail()
+        // .normalizeEmail()
         .withMessage('Please provide a valid email address'),
     passwordValidator,
     body('referralCode')
@@ -47,7 +47,7 @@ export const registerValidator = [
 export const loginValidator = [
     body('email')
         .isEmail()
-        .normalizeEmail()
+        // .normalizeEmail()
         .withMessage('Please provide a valid email address'),
     body('password')
         .notEmpty()
